@@ -17,6 +17,7 @@
   canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   #galaxyCanvas{z-index:1;opacity:1;transition:opacity 1.6s ease}
   #heartCanvas{z-index:3;display:none;opacity:0;transition:opacity 1.4s ease}
+  #fallCanvas{z-index:4;display:none;opacity:0;transition:opacity 1.4s ease}
 
   /* ============ FASE 1: GALAXIA + TÍTULO ============ */
   #galaxy-interface{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:opacity 1.4s ease}
@@ -65,11 +66,11 @@
   #muteBtn.muted .off{display:block}
   #muteBtn.muted{color:#6f6879}
 
-  /* ============ FASE 4: MARCADOR DE LA SIGUIENTE INTERFAZ ============ */
-  #placeholder-interface{position:absolute;inset:0;z-index:8;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity 1.6s ease;padding:24px}
-  #placeholder-interface.visible{opacity:1}
+  /* ============ FASE 5: FONDO DEL TÚNEL — CONTINUARÁ ============ */
+  #fall-final{position:absolute;inset:0;z-index:8;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity 1.8s ease;padding:24px;pointer-events:none}
+  #fall-final.visible{opacity:1}
   .ph-frame{position:relative;text-align:center;padding:clamp(38px,7vw,64px) clamp(28px,8vw,72px);border:1px solid rgba(255,255,255,.12);max-width:520px;background:rgba(8,6,14,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(16px);transition:opacity 1.2s ease .3s,transform 1.2s ease .3s}
-  #placeholder-interface.visible .ph-frame{opacity:1;transform:none}
+  #fall-final.visible .ph-frame{opacity:1;transform:none}
   .ph-frame .c{position:absolute;width:14px;height:14px;border-color:rgba(255,179,198,.7);border-style:solid}
   .c1{top:-1px;left:-1px;border-width:1px 0 0 1px}
   .c2{top:-1px;right:-1px;border-width:1px 1px 0 0}
@@ -87,6 +88,7 @@
   <!-- LIENZOS -->
   <canvas id="galaxyCanvas"></canvas>
   <canvas id="heartCanvas"></canvas>
+  <canvas id="fallCanvas"></canvas>
 
   <!-- FASE 1 + 2: GALAXIA, TÍTULO Y BOTÓN -->
   <div id="galaxy-interface">
@@ -117,14 +119,14 @@
     <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
   </button>
 
-  <!-- FASE 4: AQUÍ IRÁ LA OTRA INTERFAZ -->
-  <div id="placeholder-interface">
+  <!-- FASE 5: FONDO DEL TÚNEL -->
+  <div id="fall-final">
     <div class="ph-frame">
       <i class="c c1"></i><i class="c c2"></i><i class="c c3"></i><i class="c c4"></i>
       <svg class="ph-ornament" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M12 2l10 10-10 10L2 12z"/><path d="M12 7.5l4.5 4.5-4.5 4.5-4.5-4.5z"/></svg>
-      <div class="ph-overline">Pr&oacute;ximamente</div>
-      <h2>Aqu&iacute; ir&aacute; la otra interfaz</h2>
-      <p>Siguiente sorpresa en construcci&oacute;n</p>
+      <div class="ph-overline">La sorpresa contin&uacute;a</div>
+      <h2>Continuar&aacute;&hellip;</h2>
+      <p>La siguiente interfaz est&aacute; en camino</p>
     </div>
   </div>
 
@@ -136,9 +138,25 @@ const AJUSTES = {
   escapesBoton: 3,
   mensajesBurla: ["¡Casi, pero no! 🤭", "¡El Guido es más rápido jajaj! ⚡", "¡Muy lenta! 🛑"],
   textoRendision: "¡Vale, ya te dejo pasar! Presiona aquí 🥳",
-  /* Mensaje que se escribe DENTRO del corazón, con sus mismas partículas.
-     La ÚLTIMA línea sale en letra grande cursiva. */
-  mensajeCorazon: ["TE DESEO", "LO MEJOR", "Abigail"]
+  /* Mensaje que se escribe DENTRO del corazón */
+  mensajeCorazon: ["TE DESEO", "LO MEJOR", "Abigail"],
+  /* Frases del túnel de caída (en orden). La primera sale más grande. */
+  frasesTunel: [
+    "FELICES 21 AÑOS",
+    "ZHARICK ABIGAIL",
+    "HOY EL UNIVERSO CELEBRA",
+    "21 VUELTAS AL SOL",
+    "CADA ESTRELLA TE APLAUDE",
+    "BRILLAS CON LUZ PROPIA",
+    "ERES ÚNICA EN ESTE UNIVERSO",
+    "ESTE AÑO ES TUYO",
+    "SUEÑA EN GRANDE",
+    "QUE TODO SE CUMPLA",
+    "VIAIPI ♥",
+    "LA GRAVEDAD NO PUEDE CONTIGO",
+    "FELICIDAD SIN LÍMITES",
+    "21"
+  ]
 };
 
 /* ==================== BASE Y PUNTERO ==================== */
@@ -146,6 +164,8 @@ const gCanvas = document.getElementById('galaxyCanvas');
 const gCtx = gCanvas.getContext('2d');
 const hCanvas = document.getElementById('heartCanvas');
 const hCtx = hCanvas.getContext('2d');
+const fCanvas = document.getElementById('fallCanvas');
+const fCtx = fCanvas.getContext('2d');
 
 let W = window.innerWidth, H = window.innerHeight;
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -158,6 +178,7 @@ function sizeCanvas(cv, ctx){
 
 const ptr = { x:null, y:null, has:false, down:false };
 const app = { phase:'galaxy' };
+let galaxyActive = true;
 
 window.addEventListener('pointerdown', e => {
   ptr.down = true; ptr.has = true; ptr.x = e.clientX; ptr.y = e.clientY;
@@ -171,7 +192,7 @@ window.addEventListener('pointerup',    () => { ptr.down = false; });
 window.addEventListener('pointercancel',() => { ptr.down = false; });
 document.documentElement.addEventListener('mouseleave', () => { ptr.has = false; });
 
-/* Precarga de fuentes para las letras de partículas */
+/* Precarga de fuentes */
 if (document.fonts && document.fonts.load){
   document.fonts.load('500 100px Jost');
   document.fonts.load('italic 600 100px "Cormorant Garamond"');
@@ -267,7 +288,7 @@ function initStars(){
   for (let i = 0; i < n; i++) stars.push(new Star());
 }
 
-/* Estrellas fugaces de fondo (frecuentes) */
+/* Estrellas fugaces de fondo */
 let shooters = [], nextShoot = 1.2;
 function spawnShooter(){
   const dir = Math.random() < 0.5 ? 1 : -1;
@@ -302,6 +323,7 @@ function drawShooters(dt){
 
 let lastGalaxy = performance.now();
 function loopGalaxy(now){
+  if (!galaxyActive) return;
   requestAnimationFrame(loopGalaxy);
   const dt = Math.min(0.05, (now - lastGalaxy) / 1000); lastGalaxy = now;
   const t = now / 1000;
@@ -390,7 +412,7 @@ function flee(e){
 btn.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') flee(e); });
 btn.addEventListener('pointerdown',  e => { if (e.pointerType !== 'mouse') flee(e); });
 
-/* ==================== MOTOR DE MÚSICA (100% local, Web Audio) ==================== */
+/* ==================== MOTOR DE MÚSICA 1: CAJA DE MÚSICA (galaxia/corazón) ==================== */
 const AudioEngine = (() => {
   let ctx = null, master = null, delaySend = null, revSend = null;
   let running = false, muted = false, timer = null;
@@ -521,27 +543,195 @@ const AudioEngine = (() => {
   return { start, stop, toggleMute };
 })();
 
+/* ==================== MOTOR DE MÚSICA 2: PASIÓN (túnel) ==================== */
+const MusicPassion = (() => {
+  let ctx = null, master = null, delaySend = null, revSend = null;
+  let running = false, muted = false, timer = null, finaleFired = false;
+  let nextChord = 0, chordIdx = 0, nextNote = 0, arpIdx = 2, nextBeat = 0;
+
+  /* Progresión pasión en Re menor: Dm9 - Bbmaj7 - Fadd9 - C(add9) */
+  const CHORDS = [
+    { pad:[50,53,57,60,64], bass:38 },
+    { pad:[46,50,53,57,62], bass:34 },
+    { pad:[53,57,60,64,67], bass:41 },
+    { pad:[48,52,55,60,62], bass:36 }
+  ];
+  const SCALE = [62,65,67,69,72,74,77,81]; // pentatónica de Re menor
+  const f = m => 440 * Math.pow(2, (m - 69) / 12);
+
+  function impulse(dur, decay){
+    const rate = ctx.sampleRate, len = Math.floor(rate * dur);
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++){
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+
+  function build(){
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0.0001;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -22; comp.knee.value = 20; comp.ratio.value = 3.5;
+    master.connect(comp); comp.connect(ctx.destination);
+    const delay = ctx.createDelay(1.2); delay.delayTime.value = 0.45;
+    const fb = ctx.createGain(); fb.gain.value = 0.38;
+    const fbF = ctx.createBiquadFilter(); fbF.type = 'lowpass'; fbF.frequency.value = 2600;
+    delay.connect(fbF); fbF.connect(fb); fb.connect(delay);
+    delaySend = ctx.createGain(); delaySend.gain.value = 0.45; delaySend.connect(delay);
+    const dOut = ctx.createGain(); dOut.gain.value = 0.55; delay.connect(dOut); dOut.connect(master);
+    const conv = ctx.createConvolver(); conv.buffer = impulse(3.6, 2.2);
+    revSend = ctx.createGain(); revSend.gain.value = 0.55; revSend.connect(conv);
+    const rOut = ctx.createGain(); rOut.gain.value = 0.6; conv.connect(rOut); rOut.connect(master);
+  }
+
+  /* Campana dulce de pasión */
+  function bell(t, midi, vel){
+    const fr = f(midi);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16 * vel, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.0);
+    const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = fr;
+    const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = fr * 2.99;
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.0001, t);
+    g2.gain.exponentialRampToValueAtTime(0.045 * vel, t + 0.008);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    g.connect(master); g.connect(delaySend); g.connect(revSend);
+    o1.start(t); o2.start(t); o1.stop(t + 3.1); o2.stop(t + 0.7);
+  }
+
+  /* Cuerdas emotivas (saw suave filtrado, ataque lento, vibrato) */
+  function strings(t, notes, dur){
+    notes.forEach(m => {
+      [-7, 7].forEach(det => {
+        const o = ctx.createOscillator(); o.type = 'sawtooth';
+        o.frequency.value = f(m); o.detune.value = det;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 4.6 + Math.random();
+        const lg = ctx.createGain(); lg.gain.value = 3.2;
+        lfo.connect(lg); lg.connect(o.detune);
+        const fl = ctx.createBiquadFilter(); fl.type = 'lowpass';
+        fl.frequency.setValueAtTime(420, t);
+        fl.frequency.linearRampToValueAtTime(1150, t + dur * 0.55);
+        fl.Q.value = 0.8;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.017, t + dur * 0.5);
+        g.gain.linearRampToValueAtTime(0.012, t + dur * 0.95);
+        g.gain.linearRampToValueAtTime(0.0001, t + dur + 2.0);
+        o.connect(fl); fl.connect(g); g.connect(master); g.connect(revSend);
+        o.start(t); o.stop(t + dur + 2.1); lfo.start(t); lfo.stop(t + dur + 2.1);
+      });
+    });
+  }
+
+  function bass(t, midi, dur){
+    const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f(midi);
+    const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = f(midi - 12);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.055, t + 0.25);
+    g.gain.linearRampToValueAtTime(0.04, t + dur * 0.8);
+    g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.8);
+    o.connect(g); o2.connect(g); g.connect(master);
+    o.start(t); o2.start(t); o.stop(t + dur + 0.9); o2.stop(t + dur + 0.9);
+  }
+
+  /* Latido de corazón (lub-dub), muy al fondo */
+  function thump(t, f0, f1, vol){
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + 0.16);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.36);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + 0.42);
+  }
+
+  function schedule(){
+    const ahead = ctx.currentTime + 0.45;
+    while (nextChord < ahead){
+      const ch = CHORDS[chordIdx % CHORDS.length];
+      strings(nextChord, ch.pad, 4.4);
+      bass(nextChord, ch.bass, 4.4);
+      nextChord += 4.2; chordIdx++;
+    }
+    while (nextNote < ahead){
+      if (Math.random() > 0.10){
+        arpIdx = Math.max(0, Math.min(SCALE.length - 1, arpIdx + Math.floor(Math.random() * 5) - 2));
+        bell(nextNote, SCALE[arpIdx], 0.45 + Math.random() * 0.45);
+      }
+      nextNote += 0.26;
+    }
+    while (nextBeat < ahead){
+      thump(nextBeat, 62, 38, 0.5);
+      thump(nextBeat + 0.30, 84, 52, 0.28);
+      nextBeat += 1.55;
+    }
+  }
+
+  function start(){
+    if (running) return; running = true; finaleFired = false;
+    build();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    nextChord = now + 0.2; nextNote = now + 1.1; nextBeat = now + 0.8;
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.linearRampToValueAtTime(0.6, now + 3.0);
+    master.gain.linearRampToValueAtTime(0.95, now + 26.0); // crescendo de la caída
+    timer = setInterval(schedule, 120);
+  }
+
+  /* Acorde final majestuoso al llegar al fondo (Re mayor: luz) */
+  function finale(){
+    if (finaleFired || !running) return; finaleFired = true;
+    clearInterval(timer); timer = null;
+    const t = ctx.currentTime + 0.05;
+    strings(t, [50,57,62,66,69,74], 8.5); // D3 A3 D4 F#4 A4 D5
+    bass(t, 38, 8.5);
+    bell(t + 0.1, 74, 1.0);
+    bell(t + 0.55, 81, 0.75);
+    bell(t + 1.1, 86, 0.6);
+    try{
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 0.4);
+      master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 9.5);
+    }catch(e){}
+    setTimeout(() => {
+      try{ ctx.close(); }catch(e){}
+      ctx = null; running = false;
+      muteBtn.classList.remove('visible');
+    }, 10500);
+  }
+
+  function toggleMute(){
+    muted = !muted;
+    if (ctx && master){
+      const now = ctx.currentTime;
+      master.gain.cancelScheduledValues(now);
+      master.gain.setValueAtTime(master.gain.value, now);
+      master.gain.linearRampToValueAtTime(muted ? 0.0001 : 0.9, now + 0.4);
+    }
+    return muted;
+  }
+  return { start, finale, toggleMute };
+})();
+
+/* Botón de sonido: controla la música que esté sonando */
+let musicBus = null;
 const muteBtn = document.getElementById('muteBtn');
 muteBtn.addEventListener('click', e => {
   e.stopPropagation();
-  muteBtn.classList.toggle('muted', AudioEngine.toggleMute());
+  if (musicBus) muteBtn.classList.toggle('muted', musicBus.toggleMute());
 });
 
-/* ==================================================================
-   FASE 3: CORAZÓN 3D + COMETAS + INSCRIPCIÓN INTERIOR
-   Línea de tiempo (segundos, editable en TL):
-     0.6   ceniza flotando
-     2.0   comienza a ensamblarse
-     6.3   corazón formado, gira sobre sí mismo
-     7.5   cometas que nacen del corazón
-     8.5   rachas de viento (se desarma suave y se recupera)
-     29    el interior se reacomoda y ESCRIBE el mensaje adentro
-           (las letras son parte del corazón en 3D, giran con él;
-            el giro se aquieta para poder leerlas)
-     55    última vuelta acelerándose
-     60    supernova
-     61.6  desvanecer hacia la siguiente interfaz
-   ================================================================== */
+/* ==================== FASE 3: CORAZÓN 3D + COMETAS + INSCRIPCIÓN INTERIOR ==================== */
 const heartUI = document.getElementById('heart-interface');
 const heartHint = document.getElementById('heartHint');
 
@@ -573,8 +763,6 @@ const Heart = (() => {
     return 0;
   }
 
-  /* Ecuación del corazón 3D (superficie de Taubin).
-     Ejes: x = horizontal, z = vertical, y = profundidad. */
   function inside(x, y, z){
     const a = x*x + 2.25*y*y + z*z - 1;
     return a*a*a - x*x*z*z*z - 0.1125*y*y*z*z*z < 0;
@@ -594,13 +782,12 @@ const Heart = (() => {
     cx = W / 2; cy = H / 2 + Math.min(W, H) * 0.02;
   }
 
-  /* ---------- Muestreo del mensaje (en unidades "em", centrado) ---------- */
   function buildTextSpec(){
     const msgs = AJUSTES.mensajeCorazon.filter(s => s && s.trim().length);
     const n = msgs.length;
     if (!n) return null;
     const last = n - 1;
-    const RF = 100; // fuente de referencia en px
+    const RF = 100;
     const mc = document.createElement('canvas').getContext('2d');
     const fontOf  = i => i === last
       ? `italic 600 ${RF}px 'Cormorant Garamond', Georgia, serif`
@@ -652,7 +839,6 @@ const Heart = (() => {
     }
     while (pts.length > target) pts.splice((Math.random() * pts.length) | 0, 1);
 
-    // Encajar el bloque de texto DENTRO del corazón (unidades del corazón)
     const emW = maxW / RF, emH = totalH / RF;
     const k = Math.min(1.58 / emW, 1.02 / emH);
     let minNx = 1e9, maxNx = -1e9;
@@ -664,7 +850,9 @@ const Heart = (() => {
     return { pts: out, k, zOff: 0.08, minNx, maxNx };
   }
 
-  function build(){
+
+
+  function buildReal(){
     const N = Math.min(W, H) < 520 ? 2100 : 3000;
     particles = sample(N).map(p => ({
       hx: p[0], hy: p[1], hz: p[2],
@@ -697,13 +885,12 @@ const Heart = (() => {
         const q = pts[(i * 7919) % pts.length];
         p.role = 'text';
         p.nx = q.nx;
-        p.tx3 = q.nx * textSpec.k;                       // horizontal (unidades corazón)
-        p.tz3 = -q.ny * textSpec.k + textSpec.zOff;      // vertical
-        p.ty3 = 0.38 + (Math.random() - 0.5) * 0.03;     // plano interior (profundidad)
+        p.tx3 = q.nx * textSpec.k;
+        p.tz3 = -q.ny * textSpec.k + textSpec.zOff;
+        p.ty3 = 0.38 + (Math.random() - 0.5) * 0.03;
         p.tDelay = ((q.nx - textSpec.minNx) / (textSpec.maxNx - textSpec.minNx + 1e-6)) * 3.8
                  + Math.random() * 0.5;
       }
-      // El resto de partículas se va hacia la "cáscara" para dejar hueco a la inscripción
       for (let i = K; i < particles.length; i++){
         const p = particles[idx[i]];
         const sgn = p.hy === 0 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(p.hy);
@@ -714,7 +901,6 @@ const Heart = (() => {
     relayout();
   }
 
-  /* ---------- Cometas que nacen del corazón ---------- */
   function spawnComet(){
     const p = particles[(Math.random() * particles.length) | 0];
     const ox = p.x + p.ox, oy = p.y + p.oy;
@@ -760,7 +946,6 @@ const Heart = (() => {
     hCtx.globalAlpha = 1;
   }
 
-  /* ---------- Rachas de viento (desarme con recuperación) ---------- */
   function maybeWind(dt, t){
     if (t < TL.windStart || t > TL.textIn - 2) return;
     nextWind -= dt;
@@ -787,7 +972,6 @@ const Heart = (() => {
 
     if (!state.exited && t >= TL.end) beginExit();
 
-    // Supernova final
     if (!state.nova && t >= TL.nova){
       state.nova = true;
       for (const p of particles){
@@ -800,7 +984,6 @@ const Heart = (() => {
       }
     }
 
-    /* --- Rotación: gira → se aquieta para revelar la inscripción → última vuelta --- */
     let sway = 0;
     if (t < TL.textIn){
       if (t > 2.6) thetaV += (0.5 - thetaV) * Math.min(1, dt * 0.8);
@@ -810,7 +993,7 @@ const Heart = (() => {
       theta += (spinTarget - theta) * Math.min(1, dt * 1.5);
       const fadeIn  = Math.min(1, Math.max(0, (t - TL.textIn - 4) / 1.5));
       const fadeOut = Math.min(1, Math.max(0, (TL.spinUp - t) / 1.5));
-      sway = 0.10 * Math.sin(t * 0.65) * fadeIn * fadeOut; // vaivén suave mientras se lee
+      sway = 0.10 * Math.sin(t * 0.65) * fadeIn * fadeOut;
     } else {
       if (!spinStarted){ spinStarted = true; thetaV = 0.12; }
       thetaV += (1.5 - thetaV) * Math.min(1, dt * 0.45);
@@ -821,7 +1004,7 @@ const Heart = (() => {
     const formed = Math.min(1, Math.max(0, (t - 3) / 2));
     const beat = 1 + formed * 0.045 * Math.pow(Math.abs(Math.sin(t * 2.6)), 3);
     const textG = Math.min(1, Math.max(0, (t - TL.textIn) / 3));
-    const Sp = S * (1 + 0.07 * textG) * beat; // el corazón crece un pelín para dar aire a las letras
+    const Sp = S * (1 + 0.07 * textG) * beat;
     const txtPulse = 0.86 + 0.30 * Math.pow(Math.abs(Math.sin(t * 2.6 + 0.4)), 3);
     const novaFade = state.nova ? Math.max(0, 1 - (t - TL.nova) / 1.9) : 1;
 
@@ -841,8 +1024,6 @@ const Heart = (() => {
       }
       if (t > 0.7 + p.delay && p.pull < 1) p.pull = Math.min(1, p.pull + dt * 0.55);
 
-      /* Reacomodo interno: unas partículas forman las letras adentro,
-         las demás migran a la cáscara para dejarlas leer. */
       if (p.role === 'text'){
         if (t > TL.textIn + p.tDelay && p.pullText < 1) p.pullText = Math.min(1, p.pullText + dt * 0.8);
         if (p.pullText > 0){
@@ -899,12 +1080,11 @@ const Heart = (() => {
       const twk = 0.82 + 0.18 * Math.sin(p.tw + t * p.twS);
       let a;
       if (p.role === 'text' && p.pullText > 0){
-        // Las letras brillan más, con un destello que recorre de izquierda a derecha
         const shimmer = 0.86 + 0.14 * Math.sin(t * 2.4 + p.nx * 6.0);
         const depthA = (0.16 + 0.84 * nd * nd) * twk;
         a = depthA * (1 - p.pullText) + 0.98 * txtPulse * shimmer * p.pullText;
       } else {
-        a = (0.16 + 0.84 * nd * nd) * twk * (1 - 0.28 * textG); // la cáscara se atenúa un poco
+        a = (0.16 + 0.84 * nd * nd) * twk * (1 - 0.28 * textG);
       }
       const aAsh = 0.22 * twk;
       let alpha = (aAsh + (a - aAsh) * p.pull) * novaFade;
@@ -919,7 +1099,7 @@ const Heart = (() => {
   }
 
   function start(){
-    build();
+    buildReal();
     running = true; t0 = performance.now(); lastT = t0;
     theta = 0; thetaV = 0; spinTarget = null; spinStarted = false;
     state.nova = false; state.exited = false;
@@ -936,35 +1116,281 @@ const Heart = (() => {
     hCanvas.style.opacity = '0';
     heartUI.style.opacity = '0';
     AudioEngine.stop();
-    muteBtn.classList.remove('visible');
     setTimeout(() => {
       running = false; cancelAnimationFrame(raf);
       hCanvas.style.display = 'none';
       heartUI.style.display = 'none';
       heartUI.classList.remove('visible');
       heartHint.classList.remove('visible');
-      goPlaceholder();
+      goFall();
     }, 1700);
   }
   return { start, relayout };
 })();
 
-/* ==================== FASE 4: MARCADOR ==================== */
-const phUI = document.getElementById('placeholder-interface');
-function goPlaceholder(){
-  app.phase = 'placeholder';
-  gCanvas.style.opacity = '0.55';
-  phUI.style.display = 'flex';
-  requestAnimationFrame(() => requestAnimationFrame(() => phUI.classList.add('visible')));
-}
+/* ==================================================================
+   FASE 4: EL TÚNEL DE CAÍDA
+   Estás cayendo en el centro; anillos con frases giran a tu alrededor
+   como elipses. Línea de tiempo:
+     0-4s    aceleras suavemente
+     12-18s  pico de velocidad (clímax)
+     26-31s  frenas al llegar al fondo
+     ~31.5s  llegas: luz que crece + acorde final
+     ~34.5s  aparece "CONTINUARÁ…"
+   ================================================================== */
+const Fall = (() => {
+  const TL = { accel:4, peakIn:12, peakOut:18, brakeIn:26, arrive:31.5, finalAt:34.6 };
+  const VMAX = 150, PEAK = 205;
+  const RING_WORLD = 560, GAP = 430, FAR = 4600;
+
+  let running = false, raf = null, t0 = 0, lastT = 0;
+  let camZ = 0, nextRingZ = 0, phraseIdx = 0;
+  let rings = [], dust = [];
+  let arrived = false, finalShown = false, glow = 0;
+
+  const smooth = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+
+  function speedAt(t){
+    if (t < TL.accel)      return VMAX * smooth(t / TL.accel);
+    if (t < TL.peakIn)     return VMAX + (PEAK - VMAX) * smooth((t - TL.accel) / (TL.peakIn - TL.accel));
+    if (t < TL.peakOut)    return PEAK;
+    if (t < TL.brakeIn)    return PEAK - (PEAK - VMAX) * smooth((t - TL.peakOut) / (TL.brakeIn - TL.peakOut));
+    if (t < TL.arrive)     return VMAX * (1 - smooth((t - TL.brakeIn) / (TL.arrive - TL.brakeIn)));
+    return 0;
+  }
+
+  /* Sprite: frase curvada alrededor de un círculo, con aros decorativos */
+  const spriteCache = {};
+  function makeRingSprite(text, big, variant){
+    const key = text + '|' + big + '|' + variant;
+    if (spriteCache[key]) return spriteCache[key];
+
+    const S = 700, R = big ? 262 : 246;
+    const cv = document.createElement('canvas'); cv.width = cv.height = S;
+    const c = cv.getContext('2d');
+
+    const glows = ['255,110,150', '255,190,130', '170,200,255'];
+    const glow = glows[variant % 3];
+
+    let fs = big ? 66 : 54;
+    const font = fz => `500 ${fz}px Jost, 'Segoe UI', Arial, sans-serif`;
+    c.font = font(fs);
+    let tw = c.measureText(text).width;
+    const maxArc = 2 * Math.PI * R * (big ? 0.5 : 0.56);
+    if (tw > maxArc && tw > 0){
+      fs = Math.max(26, Math.floor(fs * maxArc / tw));
+      c.font = font(fs);
+      tw = c.measureText(text).width;
+    }
+
+    const sep = '   ✦   ';
+    const track = 2;
+    const sepW = c.measureText(sep).width + track * sep.length;
+    const unitW = tw + track * text.length + sepW;
+    const reps = Math.max(1, Math.round(2 * Math.PI * R * 0.98 / unitW));
+
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.shadowColor = `rgba(${glow},.95)`;
+    c.shadowBlur = 20;
+
+    const totalW = unitW * reps;
+    const angPerPx = 2 * Math.PI / totalW;
+    let th = -Math.PI / 2;
+    for (let r = 0; r < reps; r++){
+      const seq = text + sep;
+      for (const ch of seq){
+        const chW = c.measureText(ch).width;
+        th += (chW / 2) * angPerPx;
+        if (ch !== ' '){
+          c.fillStyle = (ch === '✦' || ch === '♥') ? '#ffd9a8' : '#ffffff';
+          c.save();
+          c.translate(S/2 + Math.cos(th) * R, S/2 + Math.sin(th) * R);
+          c.rotate(th + Math.PI / 2);
+          c.fillText(ch, 0, 0);
+          c.restore();
+        }
+        th += (chW / 2 + track) * angPerPx;
+      }
+    }
+
+    // Aros decorativos
+    c.shadowBlur = 0;
+    c.strokeStyle = `rgba(${glow},.30)`; c.lineWidth = 1.6;
+    c.beginPath(); c.arc(S/2, S/2, R + 54, 0, 7); c.stroke();
+    c.setLineDash([2, 13]);
+    c.strokeStyle = 'rgba(255,255,255,.16)';
+    c.beginPath(); c.arc(S/2, S/2, R - 44, 0, 7); c.stroke();
+    c.setLineDash([]);
+
+    spriteCache[key] = cv;
+    return cv;
+  }
+
+  function spawnRing(z){
+    const big = (phraseIdx === 0);
+    const spr = makeRingSprite(AJUSTES.frasesTunel[phraseIdx % AJUSTES.frasesTunel.length], big, phraseIdx % 3);
+    rings.push({
+      z,
+      rot: Math.random() * Math.PI * 2,
+      rotV: (0.13 + Math.random() * 0.3) * (Math.random() < 0.5 ? -1 : 1),
+      elK: big ? 0.84 : (0.6 + Math.random() * 0.33),   // elipticidad
+      elRot: (Math.random() - 0.5) * 0.9,
+      spr
+    });
+    phraseIdx++;
+  }
+
+  function initDust(){
+    dust = [];
+    for (let i = 0; i < 230; i++){
+      dust.push({
+        a: Math.random() * Math.PI * 2,
+        r: 70 + Math.random() * 640,
+        z: -Math.random() * FAR,
+        pink: Math.random() < 0.3
+      });
+    }
+  }
+
+  function frame(now){
+    if (!running) return;
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min(0.04, (now - lastT) / 1000 || 0.016); lastT = now;
+    const t = (now - t0) / 1000;
+
+    const v = speedAt(t);
+    camZ -= v * dt;
+
+    if (!arrived && t >= TL.arrive){
+      arrived = true;
+      MusicPassion.finale();
+    }
+    if (arrived) glow = Math.min(1, (t - TL.arrive) / 2.4);
+    if (!finalShown && t >= TL.finalAt){
+      finalShown = true;
+      document.getElementById('fall-final').classList.add('visible');
+    }
+
+    // Mantener anillos por delante
+    while (nextRingZ > camZ - FAR){
+      spawnRing(nextRingZ);
+      nextRingZ -= GAP + (Math.random() - 0.5) * 120;
+    }
+    rings = rings.filter(r => (r.z - camZ) > 46);
+
+    // Cámara con balanceo (sensación de caída)
+    const swayK = Math.min(1, v / 140) * 0.8;
+    const camX = W/2 + Math.sin(t * 0.55) * 0.05 * W * swayK;
+    const camY = H/2 + Math.cos(t * 0.42) * 0.04 * H * swayK;
+    const FOV = H * 1.05;
+
+    // Fondo
+    fCtx.fillStyle = '#05030b';
+    fCtx.fillRect(0, 0, W, H);
+
+    // Resplandor central pulsante (al ritmo del latido de la música)
+    const bp = Math.pow(Math.max(0, Math.sin(Math.PI * ((t % 1.55) / 1.55))), 3);
+    const bgR = Math.min(W, H) * (0.34 + 0.16 * bp);
+    const bg = fCtx.createRadialGradient(camX, camY, 0, camX, camY, bgR);
+    bg.addColorStop(0, `rgba(255,120,160,${0.10 + 0.07 * bp})`);
+    bg.addColorStop(1, 'rgba(255,120,160,0)');
+    fCtx.fillStyle = bg;
+    fCtx.fillRect(0, 0, W, H);
+
+    // Polvo estelar (líneas de velocidad)
+    const drift = arrived ? 20 : 0;
+    fCtx.lineCap = 'round';
+    for (const d of dust){
+      d.z -= (v + drift) * dt;
+      const depth = d.z - camZ;
+      if (depth <= 40){ d.z = camZ - FAR + Math.random() * 400; continue; }
+      const sc = FOV / depth;
+      const x1 = camX + Math.cos(d.a) * d.r * sc;
+      const y1 = camY + Math.sin(d.a) * d.r * sc;
+      const d2 = depth + Math.max(24, v * 0.055);
+      const sc2 = FOV / d2;
+      const x2 = camX + Math.cos(d.a) * d.r * sc2;
+      const y2 = camY + Math.sin(d.a) * d.r * sc2;
+      const near = Math.min(1, (FAR - depth) / 2600);
+      const fadeN = Math.min(1, (depth - 40) / 220);
+      const alpha = (0.10 + 0.34 * near) * fadeN;
+      fCtx.strokeStyle = d.pink ? `rgba(255,170,200,${alpha})` : `rgba(235,238,255,${alpha})`;
+      fCtx.lineWidth = 1.4;
+      fCtx.beginPath(); fCtx.moveTo(x1, y1); fCtx.lineTo(x2, y2); fCtx.stroke();
+    }
+
+    // Anillos: lejanos primero
+    rings.sort((a, b) => (b.z - camZ) - (a.z - camZ));
+    const slowK = arrived ? 0.35 : 1;
+    for (const r of rings){
+      r.rot += r.rotV * dt * slowK;
+      const depth = r.z - camZ;
+      const sc = FOV / depth;
+      const size = RING_WORLD * sc;
+      const f1 = Math.min(1, (FAR - depth) / 1200);
+      const f2 = Math.min(1, (depth - 46) / 160);
+      const boost = 0.75 + 0.5 * Math.max(0, 1 - (depth - 80) / 700);
+      let alpha = f1 * f2 * boost * 0.9;
+      if (alpha > 1) alpha = 1;
+      alpha *= (1 + glow * 0.4);
+      if (alpha > 1) alpha = 1;
+
+      fCtx.save();
+      fCtx.translate(camX, camY);
+      fCtx.rotate(r.elRot);
+      fCtx.scale(1, r.elK);          // ← la elipse
+      fCtx.rotate(r.rot);            // ← el texto girando dentro
+      fCtx.globalAlpha = alpha;
+      fCtx.drawImage(r.spr, -size/2, -size/2, size, size);
+      fCtx.restore();
+    }
+    fCtx.globalAlpha = 1;
+
+    // Luz del fondo al llegar
+    if (glow > 0){
+      const gr = glow * glow * 1.35 * Math.max(W, H);
+      const g = fCtx.createRadialGradient(camX, camY, 0, camX, camY, gr);
+      g.addColorStop(0, `rgba(255,240,245,${0.9 * glow})`);
+      g.addColorStop(0.4, `rgba(255,160,190,${0.4 * glow})`);
+      g.addColorStop(1, 'rgba(255,120,160,0)');
+      fCtx.fillStyle = g;
+      fCtx.fillRect(0, 0, W, H);
+    }
+  }
+
+  function start(){
+    running = true; t0 = performance.now(); lastT = t0;
+    camZ = 0; nextRingZ = -700; phraseIdx = 0;
+    rings = []; arrived = false; finalShown = false; glow = 0;
+    initDust();
+    fCanvas.style.display = 'block';
+    document.getElementById('fall-final').style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => { fCanvas.style.opacity = '1'; }));
+    raf = requestAnimationFrame(frame);
+  }
+  return { start };
+})();
 
 /* ==================== ORQUESTADOR DE FASES ==================== */
+function goFall(){
+  app.phase = 'fall';
+  galaxyActive = false;              // apagamos la galaxia (ahorro)
+  gCanvas.style.opacity = '0';
+  setTimeout(() => {
+    MusicPassion.start();
+    musicBus = MusicPassion;
+    muteBtn.classList.add('visible');
+    Fall.start();
+  }, 700);
+}
+
 btn.addEventListener('click', () => {
   if (!ready) return;
   app.phase = 'leaving';
   galaxyUI.style.opacity = '0';
   gCanvas.style.opacity = '0.3';
   AudioEngine.start();
+  musicBus = AudioEngine;
   muteBtn.classList.add('visible');
   setTimeout(() => {
     galaxyUI.style.display = 'none';
@@ -978,7 +1404,7 @@ btn.addEventListener('click', () => {
 /* ==================== ARRANQUE Y RESIZE ==================== */
 function onResize(){
   W = window.innerWidth; H = window.innerHeight;
-  sizeCanvas(gCanvas, gCtx); sizeCanvas(hCanvas, hCtx);
+  sizeCanvas(gCanvas, gCtx); sizeCanvas(hCanvas, hCtx); sizeCanvas(fCanvas, fCtx);
   paintNebula(); initStars();
   Heart.relayout();
   if (btn.classList.contains('visible')) placeBtn(W / 2, H * 0.68);
@@ -987,6 +1413,7 @@ window.addEventListener('resize', onResize);
 
 sizeCanvas(gCanvas, gCtx);
 sizeCanvas(hCanvas, hCtx);
+sizeCanvas(fCanvas, fCtx);
 paintNebula();
 initStars();
 requestAnimationFrame(loopGalaxy);
