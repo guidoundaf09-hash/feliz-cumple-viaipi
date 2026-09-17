@@ -1,516 +1,730 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Feliz Cumpleaños, Zharick!</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #030308;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#040309">
+<title>Para Zharick · 21</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============ BASE ============ */
+  *{box-sizing:border-box;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  html,body{height:100%;width:100%;overflow:hidden;background:#040309;overscroll-behavior:none;position:fixed;inset:0}
+  body{font-family:'Jost',sans-serif;color:#eae6f0}
 
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #galaxyCanvas{z-index:1;opacity:1;transition:opacity 1.6s ease}
+  #heartCanvas{z-index:3;display:none;opacity:0;transition:opacity 1.4s ease}
 
-        #galaxyCanvas { z-index: 1; }
-        #heartCanvas { z-index: 4; display: none; opacity: 0; transition: opacity 1.5s ease-in-out; }
+  /* ============ FASE 1: GALAXIA + TÍTULO ============ */
+  #galaxy-interface{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:opacity 1.4s ease}
+  .title-block{text-align:center;padding:0 24px;will-change:transform}
+  .overline{font-size:clamp(.62rem,2.6vw,.8rem);font-weight:400;letter-spacing:.42em;padding-left:.42em;text-transform:uppercase;color:#ffb3c6;opacity:0;filter:blur(4px);transform:translateY(12px);transition:all 1.2s ease}
+  .title-main{font-family:'Cormorant Garamond',serif;font-weight:500;color:#fff;font-size:clamp(2rem,7vw,3.4rem);line-height:1.15;margin-top:14px;opacity:0;filter:blur(8px);transform:translateY(16px);transition:all 1.5s ease}
+  .title-main em{font-style:italic;font-weight:700;color:#ffd9e4}
+  .title-divider{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:24px;opacity:0;transition:opacity 1.3s ease .15s}
+  .title-divider span{display:block;height:1px;width:clamp(40px,12vw,70px);background:linear-gradient(to right,transparent,rgba(255,179,198,.75))}
+  .title-divider span:last-child{background:linear-gradient(to left,transparent,rgba(255,179,198,.75))}
+  .title-divider i{width:7px;height:7px;background:#ffb3c6;transform:rotate(45deg);box-shadow:0 0 12px rgba(255,92,134,.9)}
+  .overline.visible,.title-main.visible,.title-divider.visible{opacity:1;filter:blur(0);transform:translateY(0)}
 
-        /* INTERFAZ FASE 1 Y 2: GALAXIA Y BOTÓN */
-        #galaxy-interface {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 1.5s ease-in-out;
-        }
+  /* ============ FASE 2: BOTÓN FUGITIVO ============ */
+  .cosmic-btn{position:absolute;padding:14px 26px;font-family:'Jost',sans-serif;font-size:clamp(.92rem,3.4vw,1.05rem);font-weight:500;letter-spacing:.06em;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.22);border-radius:999px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;opacity:0;pointer-events:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;max-width:80vw;white-space:normal;text-align:center;z-index:10;box-shadow:0 8px 30px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08);transition:opacity .9s ease,border-color .4s,box-shadow .4s,background .3s,transform .15s}
+  .cosmic-btn.visible{opacity:1;pointer-events:auto}
+  .cosmic-btn:active{transform:scale(.95)}
+  .cosmic-btn svg{width:19px;height:19px;flex:0 0 auto;stroke:#ffb3c6}
+  .cosmic-btn.ready{border-color:rgba(110,231,160,.75);box-shadow:0 0 26px rgba(110,231,160,.35),inset 0 1px 0 rgba(255,255,255,.08);animation:breathe 1.8s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
 
-        .cosmic-title {
-            color: #ffffff;
-            font-size: 2.5rem;
-            text-align: center;
-            font-weight: 800;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 2s ease, transform 2s ease;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px #ff75a0, 0 0 40px #9c27b0;
-            padding: 0 20px;
-            margin-bottom: 40px;
-        }
+  .taunt{position:absolute;z-index:7;padding:9px 16px;border-radius:999px;background:rgba(12,10,20,.75);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#ffd9e4;font-size:clamp(.78rem,3vw,.95rem);font-weight:500;white-space:nowrap;pointer-events:none;animation:taunt 1.25s cubic-bezier(.22,.9,.3,1) forwards}
+  @keyframes taunt{0%{opacity:0;transform:translateY(6px) scale(.7)}18%{opacity:1;transform:translateY(-6px) scale(1)}70%{opacity:1;transform:translateY(-26px) scale(1)}100%{opacity:0;transform:translateY(-44px) scale(.96)}}
 
-        .cosmic-title.visible { opacity: 1; transform: translateY(0); }
+  .spark{position:absolute;z-index:9;width:5px;height:5px;border-radius:50%;pointer-events:none;animation:spark .55s ease-out forwards}
+  @keyframes spark{0%{opacity:.95;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
 
-        .cosmic-btn {
-            position: absolute;
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.07);
-            border: 2px solid rgba(255, 117, 160, 0.5);
-            border-radius: 50px;
-            cursor: pointer;
-            opacity: 0;
-            pointer-events: none;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 15px rgba(255, 117, 160, 0.2);
-            transition: opacity 1s ease, background 0.3s, transform 0.1s ease, border-color 0.5s;
-            z-index: 10;
-            white-space: nowrap;
-        }
+  /* ============ FASE 3: CORAZÓN 3D ============ */
+  #heart-interface{position:absolute;top:10%;left:0;width:100%;z-index:6;display:none;opacity:1;transition:opacity 1.5s ease;pointer-events:none;text-align:center}
+  .heart-title{display:flex;align-items:center;justify-content:center;gap:18px;padding:0 20px}
+  .heart-title h2{font-family:'Jost',sans-serif;font-weight:300;font-size:clamp(1.05rem,4.5vw,1.65rem);letter-spacing:.85em;margin-right:-.5em;color:#fff;text-shadow:0 0 26px rgba(255,92,134,.5);opacity:0;transition:opacity 1.8s ease,letter-spacing 2.4s ease}
+  #heart-interface.visible .heart-title h2{opacity:1;letter-spacing:.5em;margin-right:-.5em}
+  .ht-line{height:1px;flex:0 0 clamp(30px,9vw,90px);transform:scaleX(0);transition:transform 1.5s ease .3s}
+  .ht-line.l{background:linear-gradient(to right,rgba(255,179,198,0),rgba(255,179,198,.75))}
+  .ht-line.r{background:linear-gradient(to left,rgba(255,179,198,0),rgba(255,179,198,.75))}
+  #heart-interface.visible .ht-line{transform:scaleX(1)}
+  .heart-hint{margin-top:14px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(.95rem,3.4vw,1.15rem);color:#8f8798;opacity:0;transition:opacity 1.4s ease}
+  .heart-hint.visible{opacity:.9}
 
-        .cosmic-btn.visible { opacity: 1; pointer-events: auto; }
-        .cosmic-btn.ready { border-color: #4caf50; box-shadow: 0 0 25px rgba(76, 175, 80, 0.6); animation: pulse 1.5s infinite; }
+  /* Botón de sonido */
+  #muteBtn{position:absolute;top:calc(14px + env(safe-area-inset-top));right:16px;z-index:20;width:42px;height:42px;border-radius:50%;display:none;align-items:center;justify-content:center;background:rgba(12,10,20,.55);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;color:#cfc8da;transition:color .3s,border-color .3s}
+  #muteBtn.visible{display:flex}
+  #muteBtn svg{width:18px;height:18px}
+  #muteBtn .off{display:none}
+  #muteBtn.muted .on{display:none}
+  #muteBtn.muted .off{display:block}
+  #muteBtn.muted{color:#6f6879}
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .taunt-message {
-            position: absolute;
-            color: #ffeb3b;
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-shadow: 0 0 8px rgba(0,0,0,0.8);
-            pointer-events: none;
-            animation: popOut 1.2s forwards ease-out;
-            z-index: 5;
-        }
-
-        @keyframes popOut {
-            0% { opacity: 0; transform: scale(0.5) translateY(0); }
-            15% { opacity: 1; transform: scale(1.1) translateY(-10px); }
-            30% { transform: scale(1) translateY(-15px); }
-            100% { opacity: 0; transform: translateY(-50px); }
-        }
-
-        /* INTERFAZ FASE 3: TEXTO DEL CORAZÓN CÓSMICO */
-        #heart-interface {
-            position: absolute;
-            top: 15%;
-            width: 100%;
-            text-align: center;
-            z-index: 5;
-            display: none;
-            opacity: 0;
-            transition: opacity 1.5s ease-in-out;
-            pointer-events: none;
-        }
-
-        .heart-title {
-            color: #ffffff;
-            font-size: 2.8rem;
-            font-weight: 800;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px #00bfff, 0 0 40px #0022ff;
-            letter-spacing: 2px;
-        }
-
-        /* INTERFAZ FASE 4: JARDÍN DE FLORES */
-        #garden-interface {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 6;
-            opacity: 0;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(to bottom, #111424, #04050a);
-            transition: opacity 1.5s ease-in-out;
-        }
-
-        .garden-container {
-            text-align: center;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 35px 25px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 85%;
-            width: 450px;
-        }
-
-        .garden-container h1 { color: #ff75a0; font-size: 2.3rem; margin-top: 0; margin-bottom: 15px; text-shadow: 0 0 15px rgba(255, 117, 160, 0.5); }
-        .garden-container p { color: #e0e0e0; font-size: 1.1rem; line-height: 1.6; margin: 10px 0; }
-
-        .petal { position: absolute; background-color: #ff9ebb; border-radius: 150px 0px 150px 0px; opacity: 0.7; animation: floatPetal 6s linear infinite; pointer-events: none; z-index: 7; }
-        @keyframes floatPetal { 0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(105vh) translateX(120px) rotate(360deg); opacity: 0; } }
-
-        .garden-bed { position: absolute; bottom: 0; left: 0; width: 100%; height: 160px; display: flex; justify-content: space-around; align-items: flex-end; pointer-events: none; z-index: 8; overflow: hidden; }
-        .flower-stem { width: 4px; height: 1px; background: #4caf50; position: relative; transform-origin: bottom; animation: growStem 3s ease-out forwards; }
-        .flower-stem::after { content: '🌸'; font-size: 28px; position: absolute; top: -22px; left: -12px; opacity: 0; transform: scale(0); animation: bloomFlower 1s 2.5s ease-out forwards; }
-        @keyframes growStem { to { transform: scaleY(90); } }
-        @keyframes bloomFlower { to { opacity: 1; transform: scale(1); } }
-    </style>
+  /* ============ FASE 4: MARCADOR DE LA SIGUIENTE INTERFAZ ============ */
+  #placeholder-interface{position:absolute;inset:0;z-index:8;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity 1.6s ease;padding:24px}
+  #placeholder-interface.visible{opacity:1}
+  .ph-frame{position:relative;text-align:center;padding:clamp(38px,7vw,64px) clamp(28px,8vw,72px);border:1px solid rgba(255,255,255,.12);max-width:520px;background:rgba(8,6,14,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(16px);transition:opacity 1.2s ease .3s,transform 1.2s ease .3s}
+  #placeholder-interface.visible .ph-frame{opacity:1;transform:none}
+  .ph-frame .c{position:absolute;width:14px;height:14px;border-color:rgba(255,179,198,.7);border-style:solid}
+  .c1{top:-1px;left:-1px;border-width:1px 0 0 1px}
+  .c2{top:-1px;right:-1px;border-width:1px 1px 0 0}
+  .c3{bottom:-1px;left:-1px;border-width:0 0 1px 1px}
+  .c4{bottom:-1px;right:-1px;border-width:0 1px 1px 0}
+  .ph-ornament{width:26px;height:26px;margin:0 auto 18px;color:#ffb3c6;animation:slowspin 9s linear infinite}
+  @keyframes slowspin{to{transform:rotate(360deg)}}
+  .ph-overline{font-size:.68rem;letter-spacing:.5em;padding-left:.5em;text-transform:uppercase;color:#ffb3c6}
+  .ph-frame h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:clamp(1.5rem,5.5vw,2.2rem);color:#fff;margin-top:10px}
+  .ph-frame p{margin-top:12px;font-size:clamp(.8rem,3vw,.95rem);font-weight:300;color:#9a93a6;letter-spacing:.04em}
+</style>
 </head>
 <body>
 
-    <!-- LIENZO DE LA GALAXIA INTERACTIVA -->
-    <canvas id="galaxyCanvas"></canvas>
+  <!-- LIENZOS -->
+  <canvas id="galaxyCanvas"></canvas>
+  <canvas id="heartCanvas"></canvas>
 
-    <!-- INTERFAZ FASE 1 Y 2: GALAXIA Y BOTÓN -->
-    <div id="galaxy-interface">
-        <div class="cosmic-title" id="mainTitle">¡Feliz Cumpleaños,<br>ZHARICK! 🌟</div>
-        <button class="cosmic-btn" id="runawayBtn">Presiona aquí para tu regalo ✨</button>
+  <!-- FASE 1 + 2: GALAXIA, TÍTULO Y BOTÓN -->
+  <div id="galaxy-interface">
+    <div class="title-block" id="titleBlock">
+      <div class="overline" id="tOverline">21 &middot; la galaxia celebra hoy</div>
+      <h1 class="title-main" id="tMain">Feliz Cumplea&ntilde;os,<br><em>Zharick</em></h1>
+      <div class="title-divider" id="tDivider"><span></span><i></i><span></span></div>
     </div>
+    <button class="cosmic-btn" id="runawayBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>
+      <span id="btnLabel">Toca para abrir tu regalo</span>
+    </button>
+  </div>
 
-    <!-- INTERFAZ FASE 3: JARDÍN DE FLORES -->
-    <div id="garden-interface" id="gardenInterface">
-        <div class="garden-container">
-            <h1>¡Feliz Cumpleaños! 🎂🎉</h1>
-            <p>Hoy es un día muy especial. Te deseo un año lleno de sonrisas, metas cumplidas y momentos mágicos.</p>
-            <p>¡Espero que te guste este pequeño jardín digital hecho para ti! 🌸✨</p>
-        </div>
-        <div class="garden-bed" id="gardenBed"></div>
+  <!-- FASE 3: CORAZÓN -->
+  <div id="heart-interface">
+    <div class="heart-title">
+      <span class="ht-line l"></span>
+      <h2>FOR MY VIAIPI</h2>
+      <span class="ht-line r"></span>
     </div>
+    <div class="heart-hint" id="heartHint">toca el coraz&oacute;n</div>
+  </div>
+
+  <!-- CONTROL DE SONIDO -->
+  <button id="muteBtn" aria-label="Silenciar m&uacute;sica">
+    <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+    <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
+  </button>
+
+  <!-- FASE 4: AQUÍ IRÁ LA OTRA INTERFAZ -->
+  <div id="placeholder-interface">
+    <div class="ph-frame">
+      <i class="c c1"></i><i class="c c2"></i><i class="c c3"></i><i class="c c4"></i>
+      <svg class="ph-ornament" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M12 2l10 10-10 10L2 12z"/><path d="M12 7.5l4.5 4.5-4.5 4.5-4.5-4.5z"/></svg>
+      <div class="ph-overline">Pr&oacute;ximamente</div>
+      <h2>Aqu&iacute; ir&aacute; la otra interfaz</h2>
+      <p>Siguiente sorpresa en construcci&oacute;n</p>
+    </div>
+  </div>
+
 <script>
-        // --- CONTROL GLOBAL DE DISPOSITIVOS ---
-        const gCanvas = document.getElementById('galaxyCanvas');
-        const gCtx = gCanvas.getContext('2d');
-        const hCanvas = document.getElementById('heartCanvas');
-        const hCtx = hCanvas.getContext('2d');
+'use strict';
 
-        let width = window.innerWidth;
-        let height = window.innerHeight;
-        gCanvas.width = hCanvas.width = width;
-        gCanvas.height = hCanvas.height = height;
+/* ==================== AJUSTES RÁPIDOS ==================== */
+const AJUSTES = {
+  escapesBoton: 3,        // cuántas veces huye el botón
+  duracionCorazon: 14.5,  // segundos del corazón antes de desvanecer
+  mensajesBurla: ["¡Casi, pero no! 🤭", "¡El Guido es más rápido jajaj! ⚡", "¡Muy lenta! 🛑"],
+  textoRendicion: "¡Vale, ya te dejo pasar! Presiona aquí 🥳"
+};
 
-        let mouseX = null, mouseY = null, isTouching = false;
+/* ==================== BASE Y PUNTERO ==================== */
+const gCanvas = document.getElementById('galaxyCanvas');
+const gCtx = gCanvas.getContext('2d');
+const hCanvas = document.getElementById('heartCanvas');
+const hCtx = hCanvas.getContext('2d');
 
-        const updatePointer = (e) => {
-            const pointer = e.touches ? e.touches[0] : e;
-            mouseX = pointer.clientX;
-            mouseY = pointer.clientY;
-        };
+let W = window.innerWidth, H = window.innerHeight;
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
-        window.addEventListener('mousedown', (e) => { isTouching = true; updatePointer(e); });
-        window.addEventListener('mousemove', (e) => { if (isTouching) updatePointer(e); });
-        window.addEventListener('mouseup', () => { isTouching = false; mouseX = null; mouseY = null; });
-        window.addEventListener('touchstart', (e) => { isTouching = true; updatePointer(e); }, { passive: true });
-        window.addEventListener('touchmove', (e) => { if (isTouching) updatePointer(e); }, { passive: true });
-        window.addEventListener('touchend', () => { isTouching = false; mouseX = null; mouseY = null; });
+function sizeCanvas(cv, ctx){
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
 
-        window.addEventListener('resize', () => {
-            width = gCanvas.width = hCanvas.width = window.innerWidth;
-            height = gCanvas.height = hCanvas.height = window.innerHeight;
-        });
+const ptr = { x:null, y:null, has:false, down:false };
+const app = { phase:'galaxy' };
 
-        // ==========================================================================
-        // MOTOR FASE 1: GALAXIA INTERACTIVA
-        // ==========================================================================
-        let stars = [];
-        class Star {
-            constructor() {
-                this.distance = Math.random() * (Math.max(width, height) * 0.6) + 10;
-                this.angle = Math.random() * Math.PI * 2;
-                this.speed = (Math.random() * 0.008 + 0.002) * (150 / this.distance + 0.5);
-                this.size = Math.random() * 1.8 + 0.5;
-                const colors = ['#fff', '#fff', '#ffb6c1', '#e0b0ff', '#87cefa'];
-                this.color = colors[Math.floor(Math.random() * colors.length)];
-                this.x = width / 2;
-                this.y = height / 2;
-            }
-            update() {
-                this.angle += this.speed;
-                const targetX = width / 2 + Math.cos(this.angle) * this.distance * 1.2;
-                const targetY = height / 2 + Math.sin(this.angle) * this.distance * 0.8;
-                
-                if (isTouching && mouseX !== null && mouseY !== null) {
-                    const dx = mouseX - this.x;
-                    const dy = mouseY - this.y;
-                    const d = Math.sqrt(dx * dx + dy * dy);
-                    if (d < 180) {
-                        const f = (180 - d) / 180;
-                        this.x += (mouseX - this.x) * f * 0.08;
-                        this.y += (mouseY - this.y) * f * 0.08;
-                        return;
-                    }
-                }
-                this.x += (targetX - this.x) * 0.05;
-                this.y += (targetY - this.y) * 0.05;
-            }
-            draw() {
-                gCtx.beginPath();
-                gCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                gCtx.fillStyle = this.color;
-                gCtx.fill();
-            }
+window.addEventListener('pointerdown', e => {
+  ptr.down = true; ptr.has = true; ptr.x = e.clientX; ptr.y = e.clientY;
+  if (app.phase === 'heart') document.getElementById('heartHint').classList.remove('visible');
+});
+window.addEventListener('pointermove', e => {
+  ptr.has = true; ptr.x = e.clientX; ptr.y = e.clientY;
+  parallaxTitulo(e);
+});
+window.addEventListener('pointerup',    () => { ptr.down = false; });
+window.addEventListener('pointercancel',() => { ptr.down = false; });
+document.documentElement.addEventListener('mouseleave', () => { ptr.has = false; });
+
+/* ==================== FASE 1: GALAXIA ==================== */
+
+// Nebulosa pre-renderizada (vinos, rosas y azules noche muy tenues)
+const nebCanvas = document.createElement('canvas');
+function paintNebula(){
+  nebCanvas.width = W; nebCanvas.height = H;
+  const c = nebCanvas.getContext('2d');
+  c.fillStyle = '#040309'; c.fillRect(0, 0, W, H);
+  c.globalCompositeOperation = 'screen';
+  const blobs = [
+    ['150,30,80',  .17], ['255,110,160', .07],
+    ['60,60,150',  .15], ['255,170,110', .05],
+    ['120,40,110', .10], ['40,80,140',   .09]
+  ];
+  blobs.forEach(b => {
+    const x = W * (0.15 + 0.7 * Math.random());
+    const y = H * (0.15 + 0.7 * Math.random());
+    const r = Math.max(W, H) * (0.3 + Math.random() * 0.32);
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${b[0]},${b[1]})`);
+    g.addColorStop(1, `rgba(${b[0]},0)`);
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+  });
+  c.globalCompositeOperation = 'source-over';
+  // Viñeta para dar profundidad
+  const v = c.createRadialGradient(W/2, H/2, Math.min(W,H)*0.35, W/2, H/2, Math.max(W,H)*0.78);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.55)');
+  c.fillStyle = v; c.fillRect(0, 0, W, H);
+}
+
+// Sprite de brillo reutilizable (mucho más rápido que shadowBlur)
+function makeGlow(rgb){
+  const s = document.createElement('canvas'); s.width = s.height = 64;
+  const c = s.getContext('2d');
+  const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, `rgba(${rgb},1)`);
+  g.addColorStop(0.28, `rgba(${rgb},0.65)`);
+  g.addColorStop(1, `rgba(${rgb},0)`);
+  c.fillStyle = g; c.fillRect(0, 0, 64, 64);
+  return s;
+}
+const coreSprite = makeGlow('255,190,205');
+
+const STAR_COLORS = ['#ffffff','#fff6e8','#ffd9e6','#e8dcff','#cfe6ff'];
+let stars = [];
+
+class Star{
+  constructor(){
+    this.dist = Math.pow(Math.random(), 0.72) * Math.max(W, H) * 0.62 + 8;
+    this.ang = Math.random() * Math.PI * 2;
+    this.spd = (0.02 + Math.random() * 0.07) * (140 / (this.dist + 60) + 0.35);
+    this.size = Math.random() < 0.06 ? Math.random() * 1.6 + 1.7 : Math.random() * 1.1 + 0.4;
+    this.color = STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)];
+    this.tw = Math.random() * 6.28; this.twS = 0.5 + Math.random() * 1.9;
+    this.bright = this.size > 1.8;
+    this.x = W / 2; this.y = H / 2;
+  }
+  update(dt){
+    this.ang += this.spd * dt;
+    const tx = W/2 + Math.cos(this.ang) * this.dist * 1.25;
+    const ty = H/2 + Math.sin(this.ang) * this.dist * 0.85;
+    // Las estrellas se curvan hacia el puntero (dedo o mouse)
+    if (ptr.has){
+      const dx = ptr.x - this.x, dy = ptr.y - this.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 190 && d > 1){
+        const f = (1 - d / 190) * 4.2 * dt;
+        this.x += dx * f; this.y += dy * f;
+      }
+    }
+    const e = Math.min(1, 2.2 * dt);
+    this.x += (tx - this.x) * e; this.y += (ty - this.y) * e;
+  }
+  draw(ctx, t){
+    const a = 0.55 + 0.45 * Math.sin(this.tw + t * this.twS);
+    if (this.bright){ // destello en cruz en las estrellas grandes
+      ctx.globalAlpha = a * 0.35; ctx.strokeStyle = this.color; ctx.lineWidth = 0.7;
+      const l = this.size * 5;
+      ctx.beginPath();
+      ctx.moveTo(this.x - l, this.y); ctx.lineTo(this.x + l, this.y);
+      ctx.moveTo(this.x, this.y - l); ctx.lineTo(this.x, this.y + l);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = a; ctx.fillStyle = this.color;
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, 6.2832); ctx.fill();
+  }
+}
+
+function initStars(){
+  const n = Math.min(W, H) < 520 ? 300 : 440;
+  stars = [];
+  for (let i = 0; i < n; i++) stars.push(new Star());
+}
+
+// Estrellas fugaces ocasionales
+let shooters = [], nextShoot = 3 + Math.random() * 4;
+function spawnShooter(){
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  shooters.push({
+    x: W * 0.15 + Math.random() * W * 0.7, y: Math.random() * H * 0.32,
+    vx: dir * (300 + Math.random() * 260), vy: 140 + Math.random() * 120,
+    life: 0, max: 0.9 + Math.random() * 0.4
+  });
+}
+function drawShooters(dt){
+  nextShoot -= dt;
+  if (nextShoot <= 0){ spawnShooter(); nextShoot = 4 + Math.random() * 7; }
+  shooters = shooters.filter(s => s.life < s.max);
+  for (const s of shooters){
+    s.life += dt; s.x += s.vx * dt; s.y += s.vy * dt;
+    const a = Math.sin(Math.PI * Math.min(1, s.life / s.max));
+    const tx = s.x - s.vx * 0.16, ty = s.y - s.vy * 0.16;
+    const g = gCtx.createLinearGradient(s.x, s.y, tx, ty);
+    g.addColorStop(0, `rgba(255,255,255,${0.9 * a})`);
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    gCtx.strokeStyle = g; gCtx.lineWidth = 1.6;
+    gCtx.beginPath(); gCtx.moveTo(s.x, s.y); gCtx.lineTo(tx, ty); gCtx.stroke();
+    gCtx.globalAlpha = a; gCtx.fillStyle = '#fff';
+    gCtx.beginPath(); gCtx.arc(s.x, s.y, 1.6, 0, 6.2832); gCtx.fill();
+  }
+  gCtx.globalAlpha = 1;
+}
+
+let lastGalaxy = performance.now();
+function loopGalaxy(now){
+  requestAnimationFrame(loopGalaxy);
+  const dt = Math.min(0.05, (now - lastGalaxy) / 1000); lastGalaxy = now;
+  const t = now / 1000;
+  gCtx.drawImage(nebCanvas, 0, 0, W, H);
+  // Núcleo galáctico que respira
+  gCtx.globalAlpha = 0.10 + 0.05 * Math.sin(t * 0.7);
+  const cs = Math.min(W, H) * 0.55;
+  gCtx.drawImage(coreSprite, W/2 - cs/2, H/2 - cs/2, cs, cs);
+  gCtx.globalAlpha = 1;
+  for (const s of stars){ s.update(dt); s.draw(gCtx, t); }
+  gCtx.globalAlpha = 1;
+  drawShooters(dt);
+}
+
+/* ==================== FASE 1: TÍTULO Y PARALLAX ==================== */
+const titleBlock = document.getElementById('titleBlock');
+const tOverline = document.getElementById('tOverline');
+const tMain = document.getElementById('tMain');
+const tDivider = document.getElementById('tDivider');
+
+function parallaxTitulo(e){
+  if (app.phase !== 'galaxy') return;
+  const nx = e.clientX / W - 0.5, ny = e.clientY / H - 0.5;
+  titleBlock.style.transform = `translate(${(-nx * 10).toFixed(1)}px, ${(-ny * 8).toFixed(1)}px)`;
+}
+
+setTimeout(() => tOverline.classList.add('visible'), 700);
+setTimeout(() => tMain.classList.add('visible'), 1350);
+setTimeout(() => tDivider.classList.add('visible'), 2150);
+
+/* ==================== FASE 2: BOTÓN FUGITIVO ==================== */
+const galaxyUI = document.getElementById('galaxy-interface');
+const btn = document.getElementById('runawayBtn');
+const btnLabel = document.getElementById('btnLabel');
+let escapes = 0, ready = false;
+
+function placeBtn(x, y){
+  const bw = btn.offsetWidth || 180, bh = btn.offsetHeight || 50;
+  const pad = 18;
+  const lx = Math.max(pad, Math.min(W - bw - pad, x - bw / 2));
+  const ly = Math.max(pad + 50, Math.min(H - bh - pad - 16, y - bh / 2));
+  btn.style.left = lx + 'px'; btn.style.top = ly + 'px';
+}
+setTimeout(() => { placeBtn(W / 2, H * 0.68); btn.classList.add('visible'); }, 4300);
+
+function spawnSparks(x, y){
+  for (let i = 0; i < 7; i++){
+    const s = document.createElement('i'); s.className = 'spark';
+    const ang = Math.random() * Math.PI * 2, r = 26 + Math.random() * 34;
+    s.style.left = x + 'px'; s.style.top = y + 'px';
+    s.style.setProperty('--dx', Math.cos(ang) * r + 'px');
+    s.style.setProperty('--dy', Math.sin(ang) * r + 'px');
+    s.style.background = i % 3 ? '#ffd9e6' : '#fff';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 620);
+  }
+}
+function showTaunt(txt, cx, cy){
+  const d = document.createElement('div');
+  d.className = 'taunt'; d.textContent = txt;
+  document.body.appendChild(d);
+  const w = d.offsetWidth;
+  let x = cx - w / 2; x = Math.max(12, Math.min(W - w - 12, x));
+  let y = cy - 58; if (y < 70) y = cy + 58;
+  d.style.left = x + 'px'; d.style.top = y + 'px';
+  setTimeout(() => d.remove(), 1400);
+}
+
+function flee(e){
+  if (escapes >= AJUSTES.escapesBoton || ready) return;
+  if (e.cancelable) e.preventDefault();
+  const oldX = btn.offsetLeft + btn.offsetWidth / 2;
+  const oldY = btn.offsetTop + btn.offsetHeight / 2;
+  placeBtn(Math.random() * W, H * 0.2 + Math.random() * H * 0.6);
+  spawnSparks(oldX, oldY);
+  showTaunt(AJUSTES.mensajesBurla[escapes] || '¡Ja!', btn.offsetLeft + btn.offsetWidth / 2, btn.offsetTop);
+  escapes++;
+  if (escapes >= AJUSTES.escapesBoton){
+    setTimeout(() => {
+      placeBtn(W / 2, H * 0.68);
+      btnLabel.textContent = AJUSTES.textoRendicion;
+      btn.classList.add('ready');
+      ready = true;
+    }, 900);
+  }
+}
+btn.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') flee(e); });
+btn.addEventListener('pointerdown',  e => { if (e.pointerType !== 'mouse') flee(e); });
+
+/* ==================== MOTOR DE MÚSICA (100% local, Web Audio) ==================== */
+const AudioEngine = (() => {
+  let ctx = null, master = null, delaySend = null, revSend = null;
+  let running = false, muted = false, timer = null;
+  let nextChord = 0, chordIdx = 0, nextNote = 0, arpIdx = 4;
+
+  const CHORDS = [ // Progresión emotiva en La mayor: A - E - F#m - D
+    { pad:[45,52,57,61,64], bass:33 },
+    { pad:[40,47,52,56,59], bass:28 },
+    { pad:[42,49,54,57,61], bass:30 },
+    { pad:[38,45,50,54,57], bass:26 }
+  ];
+  const SCALE = [57,59,61,64,66,69,71,73,76,78]; // pentatónica de La mayor
+  const f = m => 440 * Math.pow(2, (m - 69) / 12);
+
+  function impulse(dur, decay){
+    const rate = ctx.sampleRate, len = Math.floor(rate * dur);
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++){
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+
+  function build(){
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0.0001;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -20; comp.knee.value = 18; comp.ratio.value = 3;
+    master.connect(comp); comp.connect(ctx.destination);
+    // Eco espacial
+    const delay = ctx.createDelay(1); delay.delayTime.value = 0.38;
+    const fb = ctx.createGain(); fb.gain.value = 0.33;
+    const fbF = ctx.createBiquadFilter(); fbF.type = 'lowpass'; fbF.frequency.value = 2400;
+    delay.connect(fbF); fbF.connect(fb); fb.connect(delay);
+    delaySend = ctx.createGain(); delaySend.gain.value = 0.4; delaySend.connect(delay);
+    const dOut = ctx.createGain(); dOut.gain.value = 0.5; delay.connect(dOut); dOut.connect(master);
+    // Reverb de sala (impulso generado)
+    const conv = ctx.createConvolver(); conv.buffer = impulse(2.8, 2.6);
+    revSend = ctx.createGain(); revSend.gain.value = 0.5; revSend.connect(conv);
+    const rOut = ctx.createGain(); rOut.gain.value = 0.55; conv.connect(rOut); rOut.connect(master);
+  }
+
+  function bell(t, midi, vel){ // timbre de caja de música
+    const fr = f(midi);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.14 * vel, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+    const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = fr;
+    const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = fr * 3.01;
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.0001, t);
+    g2.gain.exponentialRampToValueAtTime(0.035 * vel, t + 0.01);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    g.connect(master); g.connect(delaySend); g.connect(revSend);
+    o1.start(t); o2.start(t); o1.stop(t + 2.3); o2.stop(t + 0.6);
+  }
+
+  function pad(t, chord, dur){ // colchón cálido de fondo
+    chord.pad.forEach(m => {
+      [-5, 5].forEach(det => {
+        const o = ctx.createOscillator(); o.type = 'triangle';
+        o.frequency.value = f(m); o.detune.value = det;
+        const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 760;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.02, t + dur * 0.45);
+        g.gain.linearRampToValueAtTime(0.014, t + dur * 0.95);
+        g.gain.linearRampToValueAtTime(0.0001, t + dur + 1.5);
+        o.connect(fl); fl.connect(g); g.connect(master); g.connect(revSend);
+        o.start(t); o.stop(t + dur + 1.6);
+      });
+    });
+    const b = ctx.createOscillator(); b.type = 'sine'; b.frequency.value = f(chord.bass);
+    const bg = ctx.createGain();
+    bg.gain.setValueAtTime(0.0001, t);
+    bg.gain.linearRampToValueAtTime(0.05, t + dur * 0.4);
+    bg.gain.linearRampToValueAtTime(0.0001, t + dur + 1.2);
+    b.connect(bg); bg.connect(master);
+    b.start(t); b.stop(t + dur + 1.3);
+  }
+
+  function schedule(){
+    const ahead = ctx.currentTime + 0.4;
+    while (nextChord < ahead){
+      pad(nextChord, CHORDS[chordIdx % CHORDS.length], 4.2);
+      nextChord += 4; chordIdx++;
+    }
+    while (nextNote < ahead){
+      if (Math.random() > 0.14){ // pequeñas respiraciones en silencio
+        arpIdx = Math.max(0, Math.min(SCALE.length - 1, arpIdx + Math.floor(Math.random() * 5) - 2));
+        bell(nextNote, SCALE[arpIdx], 0.5 + Math.random() * 0.5);
+      }
+      nextNote += 0.34;
+    }
+  }
+
+  function start(){
+    if (running) return; running = true;
+    build();
+    if (ctx.state === 'suspended') ctx.resume();
+    nextChord = ctx.currentTime + 0.15;
+    nextNote = ctx.currentTime + 0.9;
+    master.gain.setValueAtTime(0.0001, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.85, ctx.currentTime + 2.5);
+    timer = setInterval(schedule, 120);
+  }
+  function stop(){
+    if (!running) return;
+    clearInterval(timer);
+    try{
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 2.2);
+    }catch(e){}
+    setTimeout(() => { try{ ctx.close(); }catch(e){} ctx = null; running = false; }, 2600);
+  }
+  function toggleMute(){
+    muted = !muted;
+    if (ctx && master){
+      const now = ctx.currentTime;
+      master.gain.cancelScheduledValues(now);
+      master.gain.setValueAtTime(master.gain.value, now);
+      master.gain.linearRampToValueAtTime(muted ? 0.0001 : 0.85, now + 0.4);
+    }
+    return muted;
+  }
+  return { start, stop, toggleMute };
+})();
+
+const muteBtn = document.getElementById('muteBtn');
+muteBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  muteBtn.classList.toggle('muted', AudioEngine.toggleMute());
+});
+
+/* ==================== FASE 3: CORAZÓN 3D DE POLVO ESTELAR ==================== */
+const heartUI = document.getElementById('heart-interface');
+const heartHint = document.getElementById('heartHint');
+
+const Heart = (() => {
+  let particles = [], running = false, raf = null, t0 = 0, lastT = 0;
+  let theta = 0, thetaV = 0, S = 80, cx = 0, cy = 0;
+  const coreSprite = makeGlow('255,80,120');
+
+  // Paleta de rosa a blanco, con pesos
+  const PALETTE = [
+    { rgb:'255,59,95',   w:0.42 }, { rgb:'255,102,138', w:0.26 },
+    { rgb:'255,157,176', w:0.16 }, { rgb:'255,211,222', w:0.11 },
+    { rgb:'255,255,255', w:0.05 }
+  ];
+  const sprites = PALETTE.map(p => makeGlow(p.rgb));
+  function pickSprite(){
+    let r = Math.random();
+    for (let i = 0; i < PALETTE.length; i++){ r -= PALETTE[i].w; if (r <= 0) return i; }
+    return 0;
+  }
+
+  // Ecuación del corazón 3D (superficie de Taubin): f(x,y,z) < 0 = interior
+  function inside(x, y, z){
+    const a = x*x + 2.25*y*y + z*z - 1;
+    return a*a*a - x*x*z*z*z - 0.1125*y*y*z*z*z < 0;
+  }
+  function sample(n){
+    const pts = []; let guard = 0;
+    while (pts.length < n && guard < 300000){
+      guard++;
+      const x = Math.random() * 2.6 - 1.3, y = Math.random() * 2.4 - 1.2, z = Math.random() * 2.5 - 1.2;
+      if (inside(x, y, z)) pts.push([x, y, z]);
+    }
+    return pts;
+  }
+
+  function relayout(){
+    S = Math.min(Math.min(W, H) * 0.205, 170);
+    cx = W / 2; cy = H / 2 + Math.min(W, H) * 0.02;
+  }
+
+  function build(){
+    const N = Math.min(W, H) < 520 ? 2100 : 3000;
+    particles = sample(N).map(p => ({
+      hx: p[0], hy: p[1], hz: p[2],
+      ax: Math.random() * W, ay: Math.random() * H, // posición de "ceniza"
+      x: 0, y: 0, init: false,
+      delay: Math.random() * 2.1, pull: 0,
+      ox: 0, oy: 0, ovx: 0, ovy: 0,               // perturbación con muelle
+      spr: sprites[pickSprite()],
+      base: 1.1 + Math.random() * 1.7,
+      tw: Math.random() * 6.28, twS: 2 + Math.random() * 3,
+      driftS: 0.4 + Math.random() * 0.8, driftP: Math.random() * 6.28,
+      sx: 0, sy: 0, depth: 0, sc: 1
+    }));
+    relayout();
+  }
+
+  function frame(now){
+    if (!running) return;
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min(0.04, (now - lastT) / 1000 || 0.016); lastT = now;
+    const t = (now - t0) / 1000;
+
+    // La rotación arranca suave cuando el corazón ya se formó
+    if (t > 2.6) thetaV += (0.62 - thetaV) * Math.min(1, dt * 0.8);
+    theta += thetaV * dt;
+    const cos = Math.cos(theta), sin = Math.sin(theta);
+
+    // Latido sutil una vez formado
+    const formed = Math.min(1, Math.max(0, (t - 3) / 2));
+    const beat = 1 + formed * 0.045 * Math.pow(Math.abs(Math.sin(t * 2.6)), 3);
+    const Sp = S * beat;
+
+    hCtx.clearRect(0, 0, W, H);
+    // Resplandor cálido dentro del corazón
+    hCtx.globalAlpha = formed * (0.10 + 0.03 * Math.sin(t * 1.3));
+    const gs = Sp * 3.1;
+    hCtx.drawImage(coreSprite, cx - gs/2, cy - gs/2, gs, gs);
+
+    for (const p of particles){
+      // Convergencia ceniza → corazón (escalonada)
+      if (t > 0.7 + p.delay && p.pull < 1) p.pull = Math.min(1, p.pull + dt * 0.55);
+
+      // Ceniza flotando
+      const ashX = p.ax + Math.sin(t * p.driftS + p.driftP) * 26 + Math.sin(t * 0.23 + p.driftP * 2) * 18;
+      const ashY = p.ay + Math.cos(t * p.driftS * 0.8 + p.driftP) * 22;
+      if (!p.init){ p.x = ashX; p.y = ashY; p.init = true; }
+
+      // Punto rotado en 3D + proyección con perspectiva
+      const rx = p.hx * cos - p.hy * sin;
+      const ry = p.hx * sin + p.hy * cos;
+      const sc = 4 / (4 - ry * 0.95);
+      const tx = cx + rx * sc * Sp;
+      const ty = cy - (p.hz - 0.06) * sc * Sp;
+
+      // Dos fuerzas: hacia la ceniza (se apaga) y hacia el corazón (crece)
+      const ka = (1 - p.pull) * 2.0 * dt;
+      const kh = p.pull * p.pull * 3.5 * dt;
+      p.x += (ashX - p.x) * ka; p.y += (ashY - p.y) * ka;
+      p.x += (tx - p.x) * kh;  p.y += (ty - p.y) * kh;
+
+      // Perturbación táctil: muelle que siempre regresa a casa
+      p.ovx += (-60 * p.ox - 5.5 * p.ovx) * dt;
+      p.ovy += (-60 * p.oy - 5.5 * p.ovy) * dt;
+      p.ox += p.ovx * dt; p.oy += p.ovy * dt;
+      if (ptr.has){
+        const dx = p.x + p.ox - ptr.x, dy = p.y + p.oy - ptr.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < 12100 && d2 > 0.01){ // radio 110px
+          const d = Math.sqrt(d2);
+          const fo = (1 - d / 110) * 1100 * dt;
+          p.ovx += dx / d * fo; p.ovy += dy / d * fo;
         }
+      }
 
-        for(let i = 0; i < 400; i++) stars.push(new Star());
+      p.sx = p.x + p.ox; p.sy = p.y + p.oy;
+      p.depth = ry; p.sc = sc;
+    }
 
-        function loopGalaxy() {
-            if (gCanvas.style.display === 'none') return;
-            gCtx.fillStyle = 'rgba(3, 3, 8, 0.15)';
-            gCtx.fillRect(0, 0, width, height);
-            stars.forEach(s => { s.update(); s.draw(); });
-            requestAnimationFrame(loopGalaxy);
-        }
-        loopGalaxy();
+    // Pintar de atrás hacia adelante para dar volumen real
+    particles.sort((a, b) => a.depth - b.depth);
+    for (const p of particles){
+      const nd = (p.depth + 1.3) / 2.6; // 0 = atrás, 1 = delante
+      const twk = 0.82 + 0.18 * Math.sin(p.tw + t * p.twS);
+      const aFinal = (0.16 + 0.84 * nd * nd) * twk;
+      const aAsh = 0.22 * twk;
+      hCtx.globalAlpha = aAsh + (aFinal - aAsh) * p.pull;
+      const sz = p.base * (0.55 + 0.75 * nd) * p.sc * (0.5 + 0.5 * p.pull) * 4.5;
+      hCtx.drawImage(p.spr, p.sx - sz/2, p.sy - sz/2, sz, sz);
+    }
+    hCtx.globalAlpha = 1;
+  }
 
-        // TIMINGS FASE 1 Y 2
-        const title = document.getElementById('mainTitle');
-        const btn = document.getElementById('runawayBtn');
-        let escapeCount = 0, maxEscapes = 3;
+  function start(){
+    build();
+    running = true; t0 = performance.now(); lastT = t0;
+    hCanvas.style.display = 'block';
+    requestAnimationFrame(() => requestAnimationFrame(() => { hCanvas.style.opacity = '1'; }));
+    raf = requestAnimationFrame(frame);
+    setTimeout(() => heartUI.classList.add('visible'), 3300);
+    setTimeout(() => heartHint.classList.add('visible'), 4700);
+    setTimeout(beginExit, AJUSTES.duracionCorazon * 1000);
+  }
+  function beginExit(){
+    hCanvas.style.opacity = '0';
+    heartUI.style.opacity = '0';
+    AudioEngine.stop();
+    muteBtn.classList.remove('visible');
+    setTimeout(() => {
+      running = false; cancelAnimationFrame(raf);
+      hCanvas.style.display = 'none';
+      heartUI.style.display = 'none';
+      heartUI.classList.remove('visible');
+      heartHint.classList.remove('visible');
+      goPlaceholder();
+    }, 1700);
+  }
+  return { start, relayout };
+})();
 
-        setTimeout(() => title.classList.add('visible'), 2000);
-        setTimeout(() => {
-            btn.style.left = `calc(50% - ${btn.offsetWidth / 2}px)`;
-            btn.style.top = `65%`;
-            btn.classList.add('visible');
-        }, 5000);
+/* ==================== FASE 4: MARCADOR ==================== */
+const phUI = document.getElementById('placeholder-interface');
+function goPlaceholder(){
+  app.phase = 'placeholder';
+  gCanvas.style.opacity = '0.55';
+  phUI.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => phUI.classList.add('visible')));
+}
 
-        function moveButton(e) {
-            if (escapeCount >= maxEscapes) return;
-            e.preventDefault();
-            const padding = 50;
-            btn.style.left = `${Math.random() * (width - btn.offsetWidth - padding * 2) + padding}px`;
-            btn.style.top = `${Math.random() * (height - btn.offsetHeight - padding * 2) + padding}px`;
+/* ==================== ORQUESTADOR DE FASES ==================== */
+btn.addEventListener('click', () => {
+  if (!ready) return;
+  app.phase = 'leaving';
+  galaxyUI.style.opacity = '0';
+  gCanvas.style.opacity = '0.16'; // la galaxia queda tenue, detrás del corazón
+  AudioEngine.start();            // la música nace del toque del usuario
+  muteBtn.classList.add('visible');
+  setTimeout(() => {
+    galaxyUI.style.display = 'none';
+    app.phase = 'heart';
+    heartUI.style.display = 'block';
+    heartUI.style.opacity = '1';
+    Heart.start();
+  }, 1400);
+});
 
-            let txt = "";
-            if (escapeCount === 0) txt = "¡Casi, pero no! 🤭";
-            else if (escapeCount === 1) txt = "¡El Guido es más rápido jajaj! ⚡";
-            else if (escapeCount === 2) txt = "¡Muy lenta! 🛑";
+/* ==================== ARRANQUE Y RESIZE ==================== */
+function onResize(){
+  W = window.innerWidth; H = window.innerHeight;
+  sizeCanvas(gCanvas, gCtx); sizeCanvas(hCanvas, hCtx);
+  paintNebula(); initStars();
+  Heart.relayout();
+  if (btn.classList.contains('visible')) placeBtn(W / 2, H * 0.68);
+}
+window.addEventListener('resize', onResize);
 
-            const msg = document.createElement('div');
-            msg.classList.add('taunt-message');
-            msg.innerText = txt;
-            msg.style.left = `calc(${btn.style.left} + 10px)`;
-            msg.style.top = `calc(${btn.style.top} - 30px)`;
-            document.getElementById('galaxy-interface').appendChild(msg);
-            setTimeout(() => msg.remove(), 1200);
-
-            escapeCount++;
-            if (escapeCount === maxEscapes) {
-                setTimeout(() => {
-                    btn.style.left = `calc(50% - ${btn.offsetWidth / 2}px)`;
-                    btn.style.top = `65%`;
-                    btn.innerText = "¡Vale, ya te dejo pasar! Presiona aquí 🥳";
-                    btn.classList.add('ready');
-                }, 800);
-            }
-        }
-        btn.addEventListener('mouseenter', moveButton);
-        btn.addEventListener('touchstart', moveButton);
-
-        // ==========================================================================
-        // MOTOR FASE 2: EL CORAZÓN 3D DE POLVO CÓSMICO (TIPO TIKTOK)
-        // ==========================================================================
-        let heartParticles = [];
-        const settings = { particles: { length: 500, duration: 2, velocity: 100, effect: -0.75, size: 3 } };
-
-        class Point {
-            constructor(x = 0, y = 0) { this.x = x; this.y = y; }
-            clone() { return new Point(this.x, this.y); }
-            length(length) {
-                if (typeof length === 'undefined') return Math.sqrt(this.x * this.x + this.y * this.y);
-                this.normalize(); this.x *= length; this.y *= length; return this;
-            }
-            normalize() { const l = this.length(); this.x /= l; this.y /= l; return this; }
-        }
-
-        function pointOnHeart(t) {
-            return new Point(
-                160 * Math.pow(Math.sin(t), 3),
-                130 * Math.cos(t) - 50 * Math.cos(2 * t) - 20 * Math.cos(3 * t) - 10 * Math.cos(4 * t)
-            );
-        }
-
-        class HeartParticle {
-            constructor() {
-                this.position = new Point();
-                this.velocity = new Point();
-                this.acceleration = new Point();
-                this.age = 0;
-            }
-            initialize(x, y, dx, dy) {
-                this.position.x = x; this.position.y = y;
-                this.velocity.x = dx; this.velocity.y = dy;
-                this.acceleration.x = dx * settings.particles.effect;
-                this.acceleration.y = dy * settings.particles.effect;
-                this.age = 0;
-            }
-            update(deltaTime) {
-                this.position.x += this.velocity.x * deltaTime;
-                this.position.y += this.velocity.y * deltaTime;
-                this.velocity.x += this.acceleration.x * deltaTime;
-                this.velocity.y += this.acceleration.y * deltaTime;
-                this.age += deltaTime;
-            }
-            draw(context) {
-                if (isTouching && mouseX !== null && mouseY !== null) {
-                    const absX = this.position.x + width / 2;
-                    const absY = -this.position.y + height / 2 + 30;
-                    const dx = mouseX - absX;
-                    const dy = mouseY - absY;
-                    if(Math.sqrt(dx * dx + dy * dy) < 80) {
-                        this.position.x += dx * 0.03;
-                        this.position.y -= dy * 0.03;
-                    }
-                }
-                const factor = (settings.particles.duration - this.age) / settings.particles.duration;
-                context.fillStyle = `rgba(0, 191, 255, ${factor})`; 
-                context.fillRect(this.position.x + width / 2, -this.position.y + height / 2 + 30, settings.particles.size, settings.particles.size);
-            }
-        }
-
-        const particlePool = {
-            firstActive: 0, firstFree: 0, duration: settings.particles.duration,
-            add: function(x, y, dx, dy) {
-                heartParticles[this.firstFree].initialize(x, y, dx, dy);
-                this.firstFree++; if (this.firstFree == heartParticles.length) this.firstFree = 0;
-                if (this.firstActive == this.firstFree) { this.firstActive++; if (this.firstActive == heartParticles.length) this.firstActive = 0; }
-            },
-            update: function(deltaTime) {
-                let i;
-                if (this.firstActive < this.firstFree) { for (i = this.firstActive; i < this.firstFree; i++) heartParticles[i].update(deltaTime); }
-                if (this.firstFree < this.firstActive) { for (i = this.firstActive; i < heartParticles.length; i++) heartParticles[i].update(deltaTime); for (i = 0; i < this.firstFree; i++) heartParticles[i].update(deltaTime); }
-                while (heartParticles[this.firstActive].age >= this.duration && this.firstActive != this.firstFree) { this.firstActive++; if (this.firstActive == heartParticles.length) this.firstActive = 0; }
-            },
-             draw: function(context) {
-                let i;
-                if (this.firstActive < this.firstFree) {
-                    for (i = this.firstActive; i < this.firstFree; i++) {
-                        heartParticles[i].draw(context);
-                    }
-                }
-                if (this.firstFree < this.firstActive) {
-                    for (i = this.firstActive; i < heartParticles.length; i++) {
-                        heartParticles[i].draw(context);
-                    }
-                    for (i = 0; i < this.firstFree; i++) {
-                        heartParticles[i].draw(context);
-                    }
-                }
-            }
-        };
-
-        for (let i = 0; i < settings.particles.length; i++) {
-            heartParticles.push(new HeartParticle());
-        }
-
-        let lastTime = null;
-        function loopHeart(timestamp) {
-            if (hCanvas.style.display === 'none') return;
-            requestAnimationFrame(loopHeart);
-            if (!lastTime) lastTime = timestamp;
-            const deltaTime = (timestamp - lastTime) / 1000;
-            lastTime = timestamp;
-            hCtx.clearRect(0, 0, width, height);
-
-            const num = settings.particles.length * deltaTime / settings.particles.duration;
-            for (let i = 0; i < num; i++) {
-                const pos = pointOnHeart(Math.random() * Math.PI * 2);
-                const dir = pos.clone().length(settings.particles.velocity);
-                particlePool.add(pos.x, pos.y, dir.x, dir.y);
-            }
-            particlePool.update(deltaTime);
-            particlePool.draw(hCtx);
-        }
-
-        // ==========================================================================
-        // FLUJO Y TRANSICIONES ENTRE FASES
-        // ==========================================================================
-        btn.addEventListener('click', () => {
-            if (escapeCount < maxEscapes) return;
-
-            document.getElementById('galaxy-interface').style.opacity = '0';
-            gCanvas.style.transition = 'opacity 1.5s ease';
-            gCanvas.style.opacity = '0';
-
-            setTimeout(() => {
-                document.getElementById('galaxy-interface').style.display = 'none';
-                gCanvas.style.display = 'none';
-
-                hCanvas.style.display = 'block';
-                const heartUI = document.getElementById('heart-interface');
-                heartUI.style.display = 'block';
-                
-                requestAnimationFrame((t) => {
-                    hCanvas.style.opacity = '1';
-                    heartUI.style.opacity = '1';
-                    loopHeart(t);
-                });
-
-                setTimeout(() => {
-                    hCanvas.style.opacity = '0';
-                    heartUI.style.opacity = '0';
-
-                    setTimeout(() => {
-                        hCanvas.style.display = 'none';
-                        heartUI.style.display = 'none';
-
-                        const gardenUI = document.getElementById('garden-interface');
-                        gardenUI.style.display = 'flex';
-                        setTimeout(() => {
-                            gardenUI.style.opacity = '1';
-                            startFlowerGarden();
-                        }, 50);
-
-                    }, 1500);
-                }, 8000); 
-
-            }, 1500);
-        });
-
-        // ==========================================================================
-        // MOTOR FASE 3: JARDÍN VIRTUAL
-        // ==========================================================================
-        function startFlowerGarden() {
-            function createPetal() {
-                const petal = document.createElement('div');
-                petal.classList.add('petal');
-                petal.style.left = Math.random() * 100 + 'vw';
-                petal.style.width = Math.random() * 15 + 10 + 'px';
-                petal.style.height = Math.random() * 15 + 10 + 'px';
-                petal.style.animationDuration = Math.random() * 3 + 4 + 's';
-                petal.style.opacity = Math.random() * 0.6 + 0.4;
-                document.body.appendChild(petal);
-                setTimeout(() => petal.remove(), 6000);
-            }
-            setInterval(createPetal, 300);
-
-            const bed = document.getElementById('gardenBed');
-            const totalFlowers = Math.floor(window.innerWidth / 50);
-            for (let i = 0; i < totalFlowers; i++) {
-                setTimeout(() => {
-                    const stem = document.createElement('div');
-                    stem.classList.add('flower-stem');
-                    const randomScale = Math.random() * 50 + 40;
-                    stem.style.transform = `scaleY(${randomScale})`;
-                    bed.appendChild(stem);
-                }, i * 250);
-            }
-        }
-    </script>
+sizeCanvas(gCanvas, gCtx);
+sizeCanvas(hCanvas, hCtx);
+paintNebula();
+initStars();
+requestAnimationFrame(loopGalaxy);
+</script>
 </body>
 </html>
