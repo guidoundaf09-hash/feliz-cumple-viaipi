@@ -108,7 +108,7 @@
       <h2>FOR MY VIAIPI</h2>
       <span class="ht-line r"></span>
     </div>
-    <div class="heart-hint" id="heartHint">toca el coraz&oacute;n</div>
+    <div class="heart-hint" id="heartHint">toca la pantalla</div>
   </div>
 
   <!-- CONTROL DE SONIDO -->
@@ -133,10 +133,12 @@
 
 /* ==================== AJUSTES RÁPIDOS ==================== */
 const AJUSTES = {
-  escapesBoton: 3,        // cuántas veces huye el botón
-  duracionCorazon: 14.5,  // segundos del corazón antes de desvanecer
+  escapesBoton: 3,
   mensajesBurla: ["¡Casi, pero no! 🤭", "¡El Guido es más rápido jajaj! ⚡", "¡Muy lenta! 🛑"],
-  textoRendicion: "¡Vale, ya te dejo pasar! Presiona aquí 🥳"
+  textoRendision: "¡Vale, ya te dejo pasar! Presiona aquí 🥳",
+  /* Mensaje que se escribe DENTRO del corazón, con sus mismas partículas.
+     La ÚLTIMA línea sale en letra grande cursiva. */
+  mensajeCorazon: ["TE DESEO", "LO MEJOR", "Abigail"]
 };
 
 /* ==================== BASE Y PUNTERO ==================== */
@@ -169,9 +171,14 @@ window.addEventListener('pointerup',    () => { ptr.down = false; });
 window.addEventListener('pointercancel',() => { ptr.down = false; });
 document.documentElement.addEventListener('mouseleave', () => { ptr.has = false; });
 
+/* Precarga de fuentes para las letras de partículas */
+if (document.fonts && document.fonts.load){
+  document.fonts.load('500 100px Jost');
+  document.fonts.load('italic 600 100px "Cormorant Garamond"');
+}
+
 /* ==================== FASE 1: GALAXIA ==================== */
 
-// Nebulosa pre-renderizada (vinos, rosas y azules noche muy tenues)
 const nebCanvas = document.createElement('canvas');
 function paintNebula(){
   nebCanvas.width = W; nebCanvas.height = H;
@@ -193,13 +200,11 @@ function paintNebula(){
     c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
   });
   c.globalCompositeOperation = 'source-over';
-  // Viñeta para dar profundidad
   const v = c.createRadialGradient(W/2, H/2, Math.min(W,H)*0.35, W/2, H/2, Math.max(W,H)*0.78);
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.55)');
   c.fillStyle = v; c.fillRect(0, 0, W, H);
 }
 
-// Sprite de brillo reutilizable (mucho más rápido que shadowBlur)
 function makeGlow(rgb){
   const s = document.createElement('canvas'); s.width = s.height = 64;
   const c = s.getContext('2d');
@@ -230,7 +235,6 @@ class Star{
     this.ang += this.spd * dt;
     const tx = W/2 + Math.cos(this.ang) * this.dist * 1.25;
     const ty = H/2 + Math.sin(this.ang) * this.dist * 0.85;
-    // Las estrellas se curvan hacia el puntero (dedo o mouse)
     if (ptr.has){
       const dx = ptr.x - this.x, dy = ptr.y - this.y;
       const d = Math.hypot(dx, dy);
@@ -244,7 +248,7 @@ class Star{
   }
   draw(ctx, t){
     const a = 0.55 + 0.45 * Math.sin(this.tw + t * this.twS);
-    if (this.bright){ // destello en cruz en las estrellas grandes
+    if (this.bright){
       ctx.globalAlpha = a * 0.35; ctx.strokeStyle = this.color; ctx.lineWidth = 0.7;
       const l = this.size * 5;
       ctx.beginPath();
@@ -263,8 +267,8 @@ function initStars(){
   for (let i = 0; i < n; i++) stars.push(new Star());
 }
 
-// Estrellas fugaces ocasionales
-let shooters = [], nextShoot = 3 + Math.random() * 4;
+/* Estrellas fugaces de fondo (frecuentes) */
+let shooters = [], nextShoot = 1.2;
 function spawnShooter(){
   const dir = Math.random() < 0.5 ? 1 : -1;
   shooters.push({
@@ -275,7 +279,11 @@ function spawnShooter(){
 }
 function drawShooters(dt){
   nextShoot -= dt;
-  if (nextShoot <= 0){ spawnShooter(); nextShoot = 4 + Math.random() * 7; }
+  if (nextShoot <= 0){
+    spawnShooter();
+    if (Math.random() < 0.35) spawnShooter();
+    nextShoot = 1.1 + Math.random() * 1.7;
+  }
   shooters = shooters.filter(s => s.life < s.max);
   for (const s of shooters){
     s.life += dt; s.x += s.vx * dt; s.y += s.vy * dt;
@@ -298,7 +306,6 @@ function loopGalaxy(now){
   const dt = Math.min(0.05, (now - lastGalaxy) / 1000); lastGalaxy = now;
   const t = now / 1000;
   gCtx.drawImage(nebCanvas, 0, 0, W, H);
-  // Núcleo galáctico que respira
   gCtx.globalAlpha = 0.10 + 0.05 * Math.sin(t * 0.7);
   const cs = Math.min(W, H) * 0.55;
   gCtx.drawImage(coreSprite, W/2 - cs/2, H/2 - cs/2, cs, cs);
@@ -374,7 +381,7 @@ function flee(e){
   if (escapes >= AJUSTES.escapesBoton){
     setTimeout(() => {
       placeBtn(W / 2, H * 0.68);
-      btnLabel.textContent = AJUSTES.textoRendicion;
+      btnLabel.textContent = AJUSTES.textoRendision;
       btn.classList.add('ready');
       ready = true;
     }, 900);
@@ -389,13 +396,13 @@ const AudioEngine = (() => {
   let running = false, muted = false, timer = null;
   let nextChord = 0, chordIdx = 0, nextNote = 0, arpIdx = 4;
 
-  const CHORDS = [ // Progresión emotiva en La mayor: A - E - F#m - D
+  const CHORDS = [
     { pad:[45,52,57,61,64], bass:33 },
     { pad:[40,47,52,56,59], bass:28 },
     { pad:[42,49,54,57,61], bass:30 },
     { pad:[38,45,50,54,57], bass:26 }
   ];
-  const SCALE = [57,59,61,64,66,69,71,73,76,78]; // pentatónica de La mayor
+  const SCALE = [57,59,61,64,66,69,71,73,76,78];
   const f = m => 440 * Math.pow(2, (m - 69) / 12);
 
   function impulse(dur, decay){
@@ -414,20 +421,18 @@ const AudioEngine = (() => {
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -20; comp.knee.value = 18; comp.ratio.value = 3;
     master.connect(comp); comp.connect(ctx.destination);
-    // Eco espacial
     const delay = ctx.createDelay(1); delay.delayTime.value = 0.38;
     const fb = ctx.createGain(); fb.gain.value = 0.33;
     const fbF = ctx.createBiquadFilter(); fbF.type = 'lowpass'; fbF.frequency.value = 2400;
     delay.connect(fbF); fbF.connect(fb); fb.connect(delay);
     delaySend = ctx.createGain(); delaySend.gain.value = 0.4; delaySend.connect(delay);
     const dOut = ctx.createGain(); dOut.gain.value = 0.5; delay.connect(dOut); dOut.connect(master);
-    // Reverb de sala (impulso generado)
     const conv = ctx.createConvolver(); conv.buffer = impulse(2.8, 2.6);
     revSend = ctx.createGain(); revSend.gain.value = 0.5; revSend.connect(conv);
     const rOut = ctx.createGain(); rOut.gain.value = 0.55; conv.connect(rOut); rOut.connect(master);
   }
 
-  function bell(t, midi, vel){ // timbre de caja de música
+  function bell(t, midi, vel){
     const fr = f(midi);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
@@ -444,7 +449,7 @@ const AudioEngine = (() => {
     o1.start(t); o2.start(t); o1.stop(t + 2.3); o2.stop(t + 0.6);
   }
 
-  function pad(t, chord, dur){ // colchón cálido de fondo
+  function pad(t, chord, dur){
     chord.pad.forEach(m => {
       [-5, 5].forEach(det => {
         const o = ctx.createOscillator(); o.type = 'triangle';
@@ -475,7 +480,7 @@ const AudioEngine = (() => {
       nextChord += 4; chordIdx++;
     }
     while (nextNote < ahead){
-      if (Math.random() > 0.14){ // pequeñas respiraciones en silencio
+      if (Math.random() > 0.14){
         arpIdx = Math.max(0, Math.min(SCALE.length - 1, arpIdx + Math.floor(Math.random() * 5) - 2));
         bell(nextNote, SCALE[arpIdx], 0.5 + Math.random() * 0.5);
       }
@@ -522,16 +527,40 @@ muteBtn.addEventListener('click', e => {
   muteBtn.classList.toggle('muted', AudioEngine.toggleMute());
 });
 
-/* ==================== FASE 3: CORAZÓN 3D DE POLVO ESTELAR ==================== */
+/* ==================================================================
+   FASE 3: CORAZÓN 3D + COMETAS + INSCRIPCIÓN INTERIOR
+   Línea de tiempo (segundos, editable en TL):
+     0.6   ceniza flotando
+     2.0   comienza a ensamblarse
+     6.3   corazón formado, gira sobre sí mismo
+     7.5   cometas que nacen del corazón
+     8.5   rachas de viento (se desarma suave y se recupera)
+     29    el interior se reacomoda y ESCRIBE el mensaje adentro
+           (las letras son parte del corazón en 3D, giran con él;
+            el giro se aquieta para poder leerlas)
+     55    última vuelta acelerándose
+     60    supernova
+     61.6  desvanecer hacia la siguiente interfaz
+   ================================================================== */
 const heartUI = document.getElementById('heart-interface');
 const heartHint = document.getElementById('heartHint');
 
 const Heart = (() => {
   let particles = [], running = false, raf = null, t0 = 0, lastT = 0;
   let theta = 0, thetaV = 0, S = 80, cx = 0, cy = 0;
+  let comets = [], nextComet = 0, nextWind = 2.0;
+  let textSpec = null, spinTarget = null, spinStarted = false;
+  const state = { nova:false, exited:false };
   const coreSprite = makeGlow('255,80,120');
+  const textSprite = makeGlow('255,238,244');
+  const cometPink = makeGlow('255,150,180');
+  const cometWhite = makeGlow('255,255,255');
 
-  // Paleta de rosa a blanco, con pesos
+  const TL = {
+    ash: 0.6, assemble: 2.0, spin: 6.3, cometStart: 7.5, windStart: 8.5,
+    textIn: 29, spinUp: 55, nova: 60, end: 61.6
+  };
+
   const PALETTE = [
     { rgb:'255,59,95',   w:0.42 }, { rgb:'255,102,138', w:0.26 },
     { rgb:'255,157,176', w:0.16 }, { rgb:'255,211,222', w:0.11 },
@@ -544,7 +573,8 @@ const Heart = (() => {
     return 0;
   }
 
-  // Ecuación del corazón 3D (superficie de Taubin): f(x,y,z) < 0 = interior
+  /* Ecuación del corazón 3D (superficie de Taubin).
+     Ejes: x = horizontal, z = vertical, y = profundidad. */
   function inside(x, y, z){
     const a = x*x + 2.25*y*y + z*z - 1;
     return a*a*a - x*x*z*z*z - 0.1125*y*y*z*z*z < 0;
@@ -564,21 +594,189 @@ const Heart = (() => {
     cx = W / 2; cy = H / 2 + Math.min(W, H) * 0.02;
   }
 
+  /* ---------- Muestreo del mensaje (en unidades "em", centrado) ---------- */
+  function buildTextSpec(){
+    const msgs = AJUSTES.mensajeCorazon.filter(s => s && s.trim().length);
+    const n = msgs.length;
+    if (!n) return null;
+    const last = n - 1;
+    const RF = 100; // fuente de referencia en px
+    const mc = document.createElement('canvas').getContext('2d');
+    const fontOf  = i => i === last
+      ? `italic 600 ${RF}px 'Cormorant Garamond', Georgia, serif`
+      : `500 ${RF}px Jost, 'Segoe UI', Arial, sans-serif`;
+    const trackOf = i => i === last ? 0.05 : 0.30;
+    const strOf   = i => i === last ? msgs[i] : msgs[i].toUpperCase();
+    const lhOf    = i => RF * (i === last ? 1.5 : 1.42);
+
+    const widths = [];
+    for (let i = 0; i < n; i++){
+      mc.font = fontOf(i);
+      let w = 0;
+      for (const ch of strOf(i)) w += mc.measureText(ch).width + RF * trackOf(i);
+      widths.push(Math.max(0, w - RF * trackOf(i)));
+    }
+    let totalH = 0; for (let i = 0; i < n; i++) totalH += lhOf(i);
+    const maxW = Math.max(...widths, 1);
+
+    const cw = Math.ceil(maxW) + 40, chh = Math.ceil(totalH) + 40;
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = chh;
+    const c = cv.getContext('2d');
+    c.fillStyle = '#fff'; c.textBaseline = 'middle';
+    let y = 20;
+    for (let i = 0; i < n; i++){
+      c.font = fontOf(i);
+      let x = (cw - widths[i]) / 2;
+      const my = y + lhOf(i) / 2;
+      for (const ch of strOf(i)){
+        c.fillText(ch, x, my);
+        x += c.measureText(ch).width + RF * trackOf(i);
+      }
+      y += lhOf(i);
+    }
+
+    const data = c.getImageData(0, 0, cw, chh).data;
+    const target = Math.floor(particles.length * 0.58);
+    const collect = st => {
+      const arr = [];
+      for (let yy = 0; yy < chh; yy += st)
+        for (let xx = 0; xx < cw; xx += st)
+          if (data[(yy * cw + xx) * 4 + 3] > 140)
+            arr.push([(xx - cw / 2) / RF, (yy - chh / 2) / RF]);
+      return arr;
+    };
+    let step = 3, pts = collect(step);
+    if (pts.length > target){
+      step = Math.max(3, Math.round(step * Math.sqrt(pts.length / target)));
+      pts = collect(step);
+    }
+    while (pts.length > target) pts.splice((Math.random() * pts.length) | 0, 1);
+
+    // Encajar el bloque de texto DENTRO del corazón (unidades del corazón)
+    const emW = maxW / RF, emH = totalH / RF;
+    const k = Math.min(1.58 / emW, 1.02 / emH);
+    let minNx = 1e9, maxNx = -1e9;
+    const out = pts.map(q => {
+      if (q[0] < minNx) minNx = q[0];
+      if (q[0] > maxNx) maxNx = q[0];
+      return { nx: q[0], ny: q[1] };
+    });
+    return { pts: out, k, zOff: 0.08, minNx, maxNx };
+  }
+
   function build(){
     const N = Math.min(W, H) < 520 ? 2100 : 3000;
     particles = sample(N).map(p => ({
       hx: p[0], hy: p[1], hz: p[2],
-      ax: Math.random() * W, ay: Math.random() * H, // posición de "ceniza"
+      ax: Math.random() * W, ay: Math.random() * H,
       x: 0, y: 0, init: false,
       delay: Math.random() * 2.1, pull: 0,
-      ox: 0, oy: 0, ovx: 0, ovy: 0,               // perturbación con muelle
+      role: 'heart', pullText: 0, pullShell: 0, txtSpr: false,
+      nx: 0, tx3: 0, ty3: 0, tz3: 0, tDelay: 0,
+      sx3: 0, sy3: 0, sz3: 0,
+      ox: 0, oy: 0, ovx: 0, ovy: 0,
       spr: sprites[pickSprite()],
       base: 1.1 + Math.random() * 1.7,
       tw: Math.random() * 6.28, twS: 2 + Math.random() * 3,
       driftS: 0.4 + Math.random() * 0.8, driftP: Math.random() * 6.28,
-      sx: 0, sy: 0, depth: 0, sc: 1
+      sx: 0, sy: 0, depth: 0, sc: 1, scEff: 1
     }));
+
+    textSpec = buildTextSpec();
+    const idx = particles.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--){
+      const j = (Math.random() * (i + 1)) | 0;
+      [idx[i], idx[j]] = [idx[j], idx[i]];
+    }
+
+    if (textSpec){
+      const pts = textSpec.pts;
+      const K = Math.min(pts.length, Math.floor(particles.length * 0.58));
+      for (let i = 0; i < K; i++){
+        const p = particles[idx[i]];
+        const q = pts[(i * 7919) % pts.length];
+        p.role = 'text';
+        p.nx = q.nx;
+        p.tx3 = q.nx * textSpec.k;                       // horizontal (unidades corazón)
+        p.tz3 = -q.ny * textSpec.k + textSpec.zOff;      // vertical
+        p.ty3 = 0.38 + (Math.random() - 0.5) * 0.03;     // plano interior (profundidad)
+        p.tDelay = ((q.nx - textSpec.minNx) / (textSpec.maxNx - textSpec.minNx + 1e-6)) * 3.8
+                 + Math.random() * 0.5;
+      }
+      // El resto de partículas se va hacia la "cáscara" para dejar hueco a la inscripción
+      for (let i = K; i < particles.length; i++){
+        const p = particles[idx[i]];
+        const sgn = p.hy === 0 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(p.hy);
+        p.sx3 = p.hx; p.sz3 = p.hz;
+        p.sy3 = sgn * Math.max(Math.abs(p.hy), 0.56 + Math.random() * 0.10);
+      }
+    }
     relayout();
+  }
+
+  /* ---------- Cometas que nacen del corazón ---------- */
+  function spawnComet(){
+    const p = particles[(Math.random() * particles.length) | 0];
+    const ox = p.x + p.ox, oy = p.y + p.oy;
+    const ang = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
+    const sp = 260 + Math.random() * 300;
+    comets.push({
+      x: ox, y: oy,
+      vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+      age: 0, max: 1.0 + Math.random() * 0.7,
+      w: Math.random() < 0.4
+    });
+    for (const q of particles){
+      const dx = q.x + q.ox - ox, dy = q.y + q.oy - oy;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < 6400 && d2 > 1){
+        const d = Math.sqrt(d2), f = (1 - d / 80) * 140;
+        q.ovx += dx / d * f; q.ovy += dy / d * f;
+      }
+    }
+  }
+  function updateComets(dt, t){
+    if (t > TL.cometStart && t < TL.nova){
+      nextComet -= dt;
+      if (nextComet <= 0){
+        spawnComet();
+        nextComet = (t < TL.textIn ? 1.0 : 2.4) + Math.random() * 1.2;
+      }
+    }
+    comets = comets.filter(c => c.age < c.max);
+    for (const c of comets){
+      c.age += dt; c.x += c.vx * dt; c.y += c.vy * dt;
+      const a = Math.sin(Math.PI * Math.min(1, c.age / c.max));
+      const tx = c.x - c.vx * 0.14, ty = c.y - c.vy * 0.14;
+      const g = hCtx.createLinearGradient(c.x, c.y, tx, ty);
+      g.addColorStop(0, c.w ? `rgba(255,255,255,${0.85 * a})` : `rgba(255,170,200,${0.85 * a})`);
+      g.addColorStop(1, 'rgba(255,140,170,0)');
+      hCtx.strokeStyle = g; hCtx.lineWidth = 1.8; hCtx.lineCap = 'round';
+      hCtx.beginPath(); hCtx.moveTo(c.x, c.y); hCtx.lineTo(tx, ty); hCtx.stroke();
+      const sz = 10 + 10 * a;
+      hCtx.globalAlpha = a;
+      hCtx.drawImage(c.w ? cometWhite : cometPink, c.x - sz/2, c.y - sz/2, sz, sz);
+    }
+    hCtx.globalAlpha = 1;
+  }
+
+  /* ---------- Rachas de viento (desarme con recuperación) ---------- */
+  function maybeWind(dt, t){
+    if (t < TL.windStart || t > TL.textIn - 2) return;
+    nextWind -= dt;
+    if (nextWind > 0) return;
+    nextWind = 5 + Math.random() * 2.5;
+    const ex = cx + (Math.random() - 0.5) * S * 1.6;
+    const ey = cy + (Math.random() - 0.5) * S * 1.2;
+    const R = S * 1.7;
+    for (const p of particles){
+      const dx = p.x + p.ox - ex, dy = p.y + p.oy - ey;
+      const d = Math.hypot(dx, dy);
+      if (d < R && d > 1){
+        const f = (1 - d / R) * (260 + Math.random() * 240);
+        p.ovx += dx / d * f; p.ovy += dy / d * f;
+      }
+    }
   }
 
   function frame(now){
@@ -587,87 +785,154 @@ const Heart = (() => {
     const dt = Math.min(0.04, (now - lastT) / 1000 || 0.016); lastT = now;
     const t = (now - t0) / 1000;
 
-    // La rotación arranca suave cuando el corazón ya se formó
-    if (t > 2.6) thetaV += (0.62 - thetaV) * Math.min(1, dt * 0.8);
-    theta += thetaV * dt;
-    const cos = Math.cos(theta), sin = Math.sin(theta);
+    if (!state.exited && t >= TL.end) beginExit();
 
-    // Latido sutil una vez formado
+    // Supernova final
+    if (!state.nova && t >= TL.nova){
+      state.nova = true;
+      for (const p of particles){
+        const dx = p.x - cx, dy = p.y - cy;
+        const d = Math.hypot(dx, dy) || 1;
+        const sp = 150 + Math.random() * 430;
+        p.nvx = dx / d * sp + (Math.random() - 0.5) * 170;
+        p.nvy = dy / d * sp + (Math.random() - 0.5) * 170 - 70;
+        p.ox = 0; p.oy = 0; p.ovx = 0; p.ovy = 0; p.scEff = 1;
+      }
+    }
+
+    /* --- Rotación: gira → se aquieta para revelar la inscripción → última vuelta --- */
+    let sway = 0;
+    if (t < TL.textIn){
+      if (t > 2.6) thetaV += (0.5 - thetaV) * Math.min(1, dt * 0.8);
+      theta += thetaV * dt;
+    } else if (t < TL.spinUp){
+      if (spinTarget === null) spinTarget = Math.round(theta / (Math.PI * 2)) * Math.PI * 2;
+      theta += (spinTarget - theta) * Math.min(1, dt * 1.5);
+      const fadeIn  = Math.min(1, Math.max(0, (t - TL.textIn - 4) / 1.5));
+      const fadeOut = Math.min(1, Math.max(0, (TL.spinUp - t) / 1.5));
+      sway = 0.10 * Math.sin(t * 0.65) * fadeIn * fadeOut; // vaivén suave mientras se lee
+    } else {
+      if (!spinStarted){ spinStarted = true; thetaV = 0.12; }
+      thetaV += (1.5 - thetaV) * Math.min(1, dt * 0.45);
+      theta += thetaV * dt;
+    }
+    const cos = Math.cos(theta + sway), sin = Math.sin(theta + sway);
+
     const formed = Math.min(1, Math.max(0, (t - 3) / 2));
     const beat = 1 + formed * 0.045 * Math.pow(Math.abs(Math.sin(t * 2.6)), 3);
-    const Sp = S * beat;
+    const textG = Math.min(1, Math.max(0, (t - TL.textIn) / 3));
+    const Sp = S * (1 + 0.07 * textG) * beat; // el corazón crece un pelín para dar aire a las letras
+    const txtPulse = 0.86 + 0.30 * Math.pow(Math.abs(Math.sin(t * 2.6 + 0.4)), 3);
+    const novaFade = state.nova ? Math.max(0, 1 - (t - TL.nova) / 1.9) : 1;
 
     hCtx.clearRect(0, 0, W, H);
-    // Resplandor cálido dentro del corazón
-    hCtx.globalAlpha = formed * (0.10 + 0.03 * Math.sin(t * 1.3));
+    hCtx.globalAlpha = formed * (0.10 + 0.03 * Math.sin(t * 1.3)) * novaFade;
     const gs = Sp * 3.1;
     hCtx.drawImage(coreSprite, cx - gs/2, cy - gs/2, gs, gs);
 
+    maybeWind(dt, t);
+
     for (const p of particles){
-      // Convergencia ceniza → corazón (escalonada)
+      if (state.nova){
+        p.x += p.nvx * dt; p.y += p.nvy * dt;
+        p.nvx *= (1 - 0.55 * dt); p.nvy *= (1 - 0.55 * dt);
+        p.sx = p.x; p.sy = p.y; p.depth = 1.15;
+        continue;
+      }
       if (t > 0.7 + p.delay && p.pull < 1) p.pull = Math.min(1, p.pull + dt * 0.55);
 
-      // Ceniza flotando
+      /* Reacomodo interno: unas partículas forman las letras adentro,
+         las demás migran a la cáscara para dejarlas leer. */
+      if (p.role === 'text'){
+        if (t > TL.textIn + p.tDelay && p.pullText < 1) p.pullText = Math.min(1, p.pullText + dt * 0.8);
+        if (p.pullText > 0){
+          const kt = p.pullText * p.pullText * 2.6 * dt;
+          p.hx += (p.tx3 - p.hx) * kt;
+          p.hy += (p.ty3 - p.hy) * kt;
+          p.hz += (p.tz3 - p.hz) * kt;
+          if (p.pullText > 0.55 && !p.txtSpr){ p.spr = textSprite; p.txtSpr = true; }
+        }
+      } else if (t > TL.textIn - 1.2){
+        if (p.pullShell < 1) p.pullShell = Math.min(1, p.pullShell + dt * 0.5);
+        if (p.pullShell > 0){
+          const ks = p.pullShell * p.pullShell * 2.2 * dt;
+          p.hx += (p.sx3 - p.hx) * ks;
+          p.hy += (p.sy3 - p.hy) * ks;
+          p.hz += (p.sz3 - p.hz) * ks;
+        }
+      }
+
       const ashX = p.ax + Math.sin(t * p.driftS + p.driftP) * 26 + Math.sin(t * 0.23 + p.driftP * 2) * 18;
       const ashY = p.ay + Math.cos(t * p.driftS * 0.8 + p.driftP) * 22;
       if (!p.init){ p.x = ashX; p.y = ashY; p.init = true; }
 
-      // Punto rotado en 3D + proyección con perspectiva
       const rx = p.hx * cos - p.hy * sin;
       const ry = p.hx * sin + p.hy * cos;
       const sc = 4 / (4 - ry * 0.95);
       const tx = cx + rx * sc * Sp;
       const ty = cy - (p.hz - 0.06) * sc * Sp;
 
-      // Dos fuerzas: hacia la ceniza (se apaga) y hacia el corazón (crece)
       const ka = (1 - p.pull) * 2.0 * dt;
       const kh = p.pull * p.pull * 3.5 * dt;
       p.x += (ashX - p.x) * ka; p.y += (ashY - p.y) * ka;
       p.x += (tx - p.x) * kh;  p.y += (ty - p.y) * kh;
 
-      // Perturbación táctil: muelle que siempre regresa a casa
       p.ovx += (-60 * p.ox - 5.5 * p.ovx) * dt;
       p.ovy += (-60 * p.oy - 5.5 * p.ovy) * dt;
       p.ox += p.ovx * dt; p.oy += p.ovy * dt;
       if (ptr.has){
         const dx = p.x + p.ox - ptr.x, dy = p.y + p.oy - ptr.y;
         const d2 = dx * dx + dy * dy;
-        if (d2 < 12100 && d2 > 0.01){ // radio 110px
+        if (d2 < 12100 && d2 > 0.01){
           const d = Math.sqrt(d2);
           const fo = (1 - d / 110) * 1100 * dt;
           p.ovx += dx / d * fo; p.ovy += dy / d * fo;
         }
       }
-
       p.sx = p.x + p.ox; p.sy = p.y + p.oy;
-      p.depth = ry; p.sc = sc;
+      p.depth = ry; p.scEff = sc;
     }
 
-    // Pintar de atrás hacia adelante para dar volumen real
     particles.sort((a, b) => a.depth - b.depth);
     for (const p of particles){
-      const nd = (p.depth + 1.3) / 2.6; // 0 = atrás, 1 = delante
+      const nd = Math.min(1, Math.max(0, (p.depth + 1.3) / 2.6));
       const twk = 0.82 + 0.18 * Math.sin(p.tw + t * p.twS);
-      const aFinal = (0.16 + 0.84 * nd * nd) * twk;
+      let a;
+      if (p.role === 'text' && p.pullText > 0){
+        // Las letras brillan más, con un destello que recorre de izquierda a derecha
+        const shimmer = 0.86 + 0.14 * Math.sin(t * 2.4 + p.nx * 6.0);
+        const depthA = (0.16 + 0.84 * nd * nd) * twk;
+        a = depthA * (1 - p.pullText) + 0.98 * txtPulse * shimmer * p.pullText;
+      } else {
+        a = (0.16 + 0.84 * nd * nd) * twk * (1 - 0.28 * textG); // la cáscara se atenúa un poco
+      }
       const aAsh = 0.22 * twk;
-      hCtx.globalAlpha = aAsh + (aFinal - aAsh) * p.pull;
-      const sz = p.base * (0.55 + 0.75 * nd) * p.sc * (0.5 + 0.5 * p.pull) * 4.5;
+      let alpha = (aAsh + (a - aAsh) * p.pull) * novaFade;
+      if (alpha > 1) alpha = 1;
+      const sz = p.base * (0.55 + 0.75 * nd) * p.scEff * (0.5 + 0.5 * p.pull) * (4.5 + 0.7 * (p.pullText || 0));
+      hCtx.globalAlpha = alpha;
       hCtx.drawImage(p.spr, p.sx - sz/2, p.sy - sz/2, sz, sz);
     }
     hCtx.globalAlpha = 1;
+
+    updateComets(dt, t);
   }
 
   function start(){
     build();
     running = true; t0 = performance.now(); lastT = t0;
+    theta = 0; thetaV = 0; spinTarget = null; spinStarted = false;
+    state.nova = false; state.exited = false;
+    comets = [];
     hCanvas.style.display = 'block';
     requestAnimationFrame(() => requestAnimationFrame(() => { hCanvas.style.opacity = '1'; }));
     raf = requestAnimationFrame(frame);
     setTimeout(() => heartUI.classList.add('visible'), 3300);
-    setTimeout(() => heartHint.classList.add('visible'), 4700);
-    setTimeout(beginExit, AJUSTES.duracionCorazon * 1000);
+    setTimeout(() => heartHint.classList.add('visible'), 5000);
   }
   function beginExit(){
+    if (state.exited) return;
+    state.exited = true;
     hCanvas.style.opacity = '0';
     heartUI.style.opacity = '0';
     AudioEngine.stop();
@@ -698,8 +963,8 @@ btn.addEventListener('click', () => {
   if (!ready) return;
   app.phase = 'leaving';
   galaxyUI.style.opacity = '0';
-  gCanvas.style.opacity = '0.16'; // la galaxia queda tenue, detrás del corazón
-  AudioEngine.start();            // la música nace del toque del usuario
+  gCanvas.style.opacity = '0.3';
+  AudioEngine.start();
   muteBtn.classList.add('visible');
   setTimeout(() => {
     galaxyUI.style.display = 'none';
