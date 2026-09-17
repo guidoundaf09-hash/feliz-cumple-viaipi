@@ -850,7 +850,25 @@ const Heart = (() => {
     return { pts: out, k, zOff: 0.08, minNx, maxNx };
   }
 
-
+  function build(){
+    const N = Math.min(W, H) < 520 ? 2100 : 3000;
+    particles = sample(N).map(p => ({
+      hx: p[0], hy: p[1], hz: p[2],
+      ax: Math.random() * W, ay: Math.random() * H,
+      x: 0, y: 0, init: false,
+      delay: Math.random() * 2.1, pull: 0,
+      role: 'heart', pullText: 0, pullShell: 0, txtSpr: false,
+      nx: 0, tx3: 0, ty3: 0, tz3: 0, tDelay: 0,
+      sx3: 0, sy3: 0, sz3: 0,
+      ox: 0, oy: 0, ovx: 0, ovy: 0,
+      spr: sprites[pickSprite()],
+      base: 1.1 + Math.random() * 1.7,
+      tw: Math.random() * 6.28; // placeholder removed below
+    }));
+    return null;
+  }
+  /* NOTA: build real (con todos los campos) está debajo; esta línea nunca corre */
+  particles = [];
 
   function buildReal(){
     const N = Math.min(W, H) < 520 ? 2100 : 3000;
