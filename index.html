@@ -21,18 +21,19 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* Lienzo interactivo de la galaxia */
-        #galaxyCanvas {
+        canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
             display: block;
         }
 
-        /* Contenedor de la Fase Cósmica */
+        #galaxyCanvas { z-index: 1; }
+        #heartCanvas { z-index: 4; display: none; opacity: 0; transition: opacity 1.5s ease-in-out; }
+
+        /* INTERFAZ FASE 1 Y 2: GALAXIA Y BOTÓN */
         #galaxy-interface {
             position: absolute;
             top: 0;
@@ -47,7 +48,6 @@
             transition: opacity 1.5s ease-in-out;
         }
 
-        /* Título de neón galáctico */
         .cosmic-title {
             color: #ffffff;
             font-size: 2.5rem;
@@ -56,21 +56,15 @@
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 2s ease, transform 2s ease;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
-                         0 0 20px #ff75a0,
-                         0 0 40px #9c27b0;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px #ff75a0, 0 0 40px #9c27b0;
             padding: 0 20px;
             margin-bottom: 40px;
         }
 
-        .cosmic-title.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .cosmic-title.visible { opacity: 1; transform: translateY(0); }
 
-        /* Botón travieso e interactivo */
         .cosmic-btn {
-            position: absolute; /* Requerido para el movimiento libre */
+            position: absolute;
             padding: 15px 30px;
             font-size: 1.1rem;
             font-weight: bold;
@@ -88,16 +82,8 @@
             white-space: nowrap;
         }
 
-        .cosmic-btn.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .cosmic-btn.ready {
-            border-color: #4caf50;
-            box-shadow: 0 0 25px rgba(76, 175, 80, 0.6);
-            animation: pulse 1.5s infinite;
-        }
+        .cosmic-btn.visible { opacity: 1; pointer-events: auto; }
+        .cosmic-btn.ready { border-color: #4caf50; box-shadow: 0 0 25px rgba(76, 175, 80, 0.6); animation: pulse 1.5s infinite; }
 
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -105,7 +91,6 @@
             100% { transform: scale(1); }
         }
 
-        /* Mensajes burlones flotantes */
         .taunt-message {
             position: absolute;
             color: #ffeb3b;
@@ -124,16 +109,35 @@
             100% { opacity: 0; transform: translateY(-50px); }
         }
 
-        /* ==========================================================================
-           FASE DE LAS FLORES (OCULTA AL PRINCIPIO)
-           ========================================================================== */
+        /* INTERFAZ FASE 3: TEXTO DEL CORAZÓN CÓSMICO */
+        #heart-interface {
+            position: absolute;
+            top: 15%;
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+            display: none;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            pointer-events: none;
+        }
+
+        .heart-title {
+            color: #ffffff;
+            font-size: 2.8rem;
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px #00bfff, 0 0 40px #0022ff;
+            letter-spacing: 2px;
+        }
+
+        /* INTERFAZ FASE 4: JARDÍN DE FLORES */
         #garden-interface {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
+            z-index: 6;
             opacity: 0;
             display: none;
             justify-content: center;
@@ -155,79 +159,17 @@
             width: 450px;
         }
 
-        .garden-container h1 {
-            color: #ff75a0;
-            font-size: 2.3rem;
-            margin-top: 0;
-            margin-bottom: 15px;
-            text-shadow: 0 0 15px rgba(255, 117, 160, 0.5);
-        }
+        .garden-container h1 { color: #ff75a0; font-size: 2.3rem; margin-top: 0; margin-bottom: 15px; text-shadow: 0 0 15px rgba(255, 117, 160, 0.5); }
+        .garden-container p { color: #e0e0e0; font-size: 1.1rem; line-height: 1.6; margin: 10px 0; }
 
-        .garden-container p {
-            color: #e0e0e0;
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin: 10px 0;
-        }
+        .petal { position: absolute; background-color: #ff9ebb; border-radius: 150px 0px 150px 0px; opacity: 0.7; animation: floatPetal 6s linear infinite; pointer-events: none; z-index: 7; }
+        @keyframes floatPetal { 0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(105vh) translateX(120px) rotate(360deg); opacity: 0; } }
 
-        /* Lluvia de pétalos */
-        .petal {
-            position: absolute;
-            background-color: #ff9ebb;
-            border-radius: 150px 0px 150px 0px;
-            opacity: 0.7;
-            animation: floatPetal 6s linear infinite;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        @keyframes floatPetal {
-            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(105vh) translateX(120px) rotate(360deg); opacity: 0; }
-        }
-
-        /* Estructura del jardín inferior */
-        .garden-bed {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 160px;
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            pointer-events: none;
-            z-index: 3;
-            overflow: hidden;
-        }
-
-        .flower-stem {
-            width: 4px;
-            height: 1px;
-            background: #4caf50;
-            position: relative;
-            transform-origin: bottom;
-            animation: growStem 3s ease-out forwards;
-        }
-
-        .flower-stem::after {
-            content: '🌸';
-            font-size: 28px;
-            position: absolute;
-            top: -22px;
-            left: -12px;
-            opacity: 0;
-            transform: scale(0);
-            animation: bloomFlower 1s 2.5s ease-out forwards;
-        }
-
-        @keyframes growStem {
-            to { transform: scaleY(90); } /* Multiplica la altura visual */
-        }
-
-        @keyframes bloomFlower {
-            to { opacity: 1; transform: scale(1); }
-        }
+        .garden-bed { position: absolute; bottom: 0; left: 0; width: 100%; height: 160px; display: flex; justify-content: space-around; align-items: flex-end; pointer-events: none; z-index: 8; overflow: hidden; }
+        .flower-stem { width: 4px; height: 1px; background: #4caf50; position: relative; transform-origin: bottom; animation: growStem 3s ease-out forwards; }
+        .flower-stem::after { content: '🌸'; font-size: 28px; position: absolute; top: -22px; left: -12px; opacity: 0; transform: scale(0); animation: bloomFlower 1s 2.5s ease-out forwards; }
+        @keyframes growStem { to { transform: scaleY(90); } }
+        @keyframes bloomFlower { to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -250,37 +192,46 @@
         </div>
         <div class="garden-bed" id="gardenBed"></div>
     </div>
+<script>
+        // --- CONTROL GLOBAL DE DISPOSITIVOS ---
+        const gCanvas = document.getElementById('galaxyCanvas');
+        const gCtx = gCanvas.getContext('2d');
+        const hCanvas = document.getElementById('heartCanvas');
+        const hCtx = hCanvas.getContext('2d');
 
-       <script>
-        // --- CONFIGURACIÓN E INICIALIZACIÓN DEL CANVAS ---
-        const canvas = document.getElementById('galaxyCanvas');
-        const ctx = canvas.getContext('2d');
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        gCanvas.width = hCanvas.width = width;
+        gCanvas.height = hCanvas.height = height;
 
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
+        let mouseX = null, mouseY = null, isTouching = false;
+
+        const updatePointer = (e) => {
+            const pointer = e.touches ? e.touches[0] : e;
+            mouseX = pointer.clientX;
+            mouseY = pointer.clientY;
+        };
+
+        window.addEventListener('mousedown', (e) => { isTouching = true; updatePointer(e); });
+        window.addEventListener('mousemove', (e) => { if (isTouching) updatePointer(e); });
+        window.addEventListener('mouseup', () => { isTouching = false; mouseX = null; mouseY = null; });
+        window.addEventListener('touchstart', (e) => { isTouching = true; updatePointer(e); }, { passive: true });
+        window.addEventListener('touchmove', (e) => { if (isTouching) updatePointer(e); }, { passive: true });
+        window.addEventListener('touchend', () => { isTouching = false; mouseX = null; mouseY = null; });
 
         window.addEventListener('resize', () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            initGalaxy();
+            width = gCanvas.width = hCanvas.width = window.innerWidth;
+            height = gCanvas.height = hCanvas.height = window.innerHeight;
         });
 
-        // --- SISTEMA DE PARTÍCULAS INTERACTIVAS (GALAXIA PREMIUM) ---
+        // ==========================================================================
+        // MOTOR FASE 1: GALAXIA INTERACTIVA
+        // ==========================================================================
         let stars = [];
-        const numStars = 450; 
-        let mouseX = null;
-        let mouseY = null;
-        let isTouching = false;
-
         class Star {
             constructor() {
-                this.reset();
-                this.angle = Math.random() * Math.PI * 2;
-            }
-
-            reset() {
                 this.distance = Math.random() * (Math.max(width, height) * 0.6) + 10;
-                this.angle = 0;
+                this.angle = Math.random() * Math.PI * 2;
                 this.speed = (Math.random() * 0.008 + 0.002) * (150 / this.distance + 0.5);
                 this.size = Math.random() * 1.8 + 0.5;
                 const colors = ['#fff', '#fff', '#ffb6c1', '#e0b0ff', '#87cefa'];
@@ -288,135 +239,77 @@
                 this.x = width / 2;
                 this.y = height / 2;
             }
-
             update() {
                 this.angle += this.speed;
-                
                 const targetX = width / 2 + Math.cos(this.angle) * this.distance * 1.2;
                 const targetY = height / 2 + Math.sin(this.angle) * this.distance * 0.8;
-
-                // ¡CORREGIDO! Interacción física con el dedo/cursor
+                
                 if (isTouching && mouseX !== null && mouseY !== null) {
                     const dx = mouseX - this.x;
                     const dy = mouseY - this.y;
-                    const distToMouse = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distToMouse < 180) {
-                        const force = (180 - distToMouse) / 180;
-                        this.x += (mouseX - this.x) * force * 0.08;
-                        this.y += (mouseY - this.y) * force * 0.08;
+                    const d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 180) {
+                        const f = (180 - d) / 180;
+                        this.x += (mouseX - this.x) * f * 0.08;
+                        this.y += (mouseY - this.y) * f * 0.08;
                         return;
                     }
                 }
-
                 this.x += (targetX - this.x) * 0.05;
                 this.y += (targetY - this.y) * 0.05;
             }
-
             draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                if (this.size > 1.4) {
-                    ctx.shadowBlur = 8;
-                    ctx.shadowColor = this.color;
-                } else {
-                    ctx.shadowBlur = 0;
-                }
-                ctx.fill();
+                gCtx.beginPath();
+                gCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                gCtx.fillStyle = this.color;
+                gCtx.fill();
             }
         }
 
-        function initGalaxy() {
-            stars = [];
-            for (let i = 0; i < numStars; i++) {
-                stars.push(new Star());
-            }
+        for(let i = 0; i < 400; i++) stars.push(new Star());
+
+        function loopGalaxy() {
+            if (gCanvas.style.display === 'none') return;
+            gCtx.fillStyle = 'rgba(3, 3, 8, 0.15)';
+            gCtx.fillRect(0, 0, width, height);
+            stars.forEach(s => { s.update(); s.draw(); });
+            requestAnimationFrame(loopGalaxy);
         }
+        loopGalaxy();
 
-        function animateGalaxy() {
-            ctx.fillStyle = 'rgba(3, 3, 8, 0.15)';
-            ctx.shadowBlur = 0;
-            ctx.fillRect(0, 0, width, height);
-
-            stars.forEach(star => {
-                star.update();
-                star.draw();
-            });
-            requestAnimationFrame(animateGalaxy);
-        }
-
-        // --- ¡CORREGIDO! MANEJO DE EVENTOS TÁCTILES EXTRAE EL DEDO CORRECTO ---
-        const handleStart = (e) => {
-            isTouching = true;
-            const pointer = e.touches ? e.touches[0] : e;
-            mouseX = pointer.clientX;
-            mouseY = pointer.clientY;
-        };
-
-        const handleMove = (e) => {
-            if (!isTouching) return;
-            const pointer = e.touches ? e.touches[0] : e;
-            mouseX = pointer.clientX;
-            mouseY = pointer.clientY;
-        };
-
-        const handleEnd = () => {
-            isTouching = false;
-            mouseX = null;
-            mouseY = null;
-        };
-
-        window.addEventListener('mousedown', handleStart);
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleEnd);
-
-        window.addEventListener('touchstart', handleStart, { passive: true });
-        window.addEventListener('touchmove', handleMove, { passive: true });
-        window.addEventListener('touchend', handleEnd);
-
-        initGalaxy();
-        animateGalaxy();
-
-        // --- LOGICA DE TIEMPOS Y FASES DEL JUEGO ---
+        // TIMINGS FASE 1 Y 2
         const title = document.getElementById('mainTitle');
         const btn = document.getElementById('runawayBtn');
-        let escapeCount = 0;
-        const maxEscapes = 3;
+        let escapeCount = 0, maxEscapes = 3;
 
+        setTimeout(() => title.classList.add('visible'), 2000);
         setTimeout(() => {
-            title.classList.add('visible'); 
-        }, 3000); 
-
-        setTimeout(() => {
-            // ¡CORREGIDO! Sintaxis de asignación de estilos dinámicos
             btn.style.left = `calc(50% - ${btn.offsetWidth / 2}px)`;
             btn.style.top = `65%`;
             btn.classList.add('visible');
-        }, 7000); 
+        }, 5000);
 
-
-        // --- COMPORTAMIENTO DEL BOTÓN TRAVIESO ---
-        function moveButtonTemplate(e) {
+        function moveButton(e) {
             if (escapeCount >= maxEscapes) return;
+            e.preventDefault();
+            const padding = 50;
+            btn.style.left = `${Math.random() * (width - btn.offsetWidth - padding * 2) + padding}px`;
+            btn.style.top = `${Math.random() * (height - btn.offsetHeight - padding * 2) + padding}px`;
 
-            e.preventDefault(); 
-            
-            const padding = 40;
-            const randomX = Math.random() * (width - btn.offsetWidth - padding * 2) + padding;
-            const randomY = Math.random() * (height - btn.offsetHeight - padding * 2) + padding;
+            let txt = "";
+            if (escapeCount === 0) txt = "¡Casi, pero no! 🤭";
+            else if (escapeCount === 1) txt = "¡El Guido es más rápido jajaj! ⚡";
+            else if (escapeCount === 2) txt = "¡Muy lenta! 🛑";
 
-            btn.style.left = `${randomX}px`;
-            btn.style.top = `${randomY}px`;
+            const msg = document.createElement('div');
+            msg.classList.add('taunt-message');
+            msg.innerText = txt;
+            msg.style.left = `calc(${btn.style.left} + 10px)`;
+            msg.style.top = `calc(${btn.style.top} - 30px)`;
+            document.getElementById('galaxy-interface').appendChild(msg);
+            setTimeout(() => msg.remove(), 1200);
 
-            let tauntText = "";
-            if (escapeCount === 0) tauntText = "¡Casi, pero no! 🤭";
-            else if (escapeCount === 1) tauntText = "¡El Guido es más rápido jajaj! ⚡";
-            else if (escapeCount === 2) tauntText = "¡Muy lenta! 🛑";
-
-            createTauntMessage(tauntText);
             escapeCount++;
-
             if (escapeCount === maxEscapes) {
                 setTimeout(() => {
                     btn.style.left = `calc(50% - ${btn.offsetWidth / 2}px)`;
@@ -426,46 +319,172 @@
                 }, 800);
             }
         }
+        btn.addEventListener('mouseenter', moveButton);
+        btn.addEventListener('touchstart', moveButton);
 
-        btn.addEventListener('mouseenter', moveButtonTemplate);
-        btn.addEventListener('touchstart', moveButtonTemplate);
+        // ==========================================================================
+        // MOTOR FASE 2: EL CORAZÓN 3D DE POLVO CÓSMICO (TIPO TIKTOK)
+        // ==========================================================================
+        let heartParticles = [];
+        const settings = { particles: { length: 500, duration: 2, velocity: 100, effect: -0.75, size: 3 } };
 
-        function createTauntMessage(text) {
-            const msg = document.createElement('div');
-            msg.classList.add('taunt-message');
-            msg.innerText = text;
-            // ¡CORREGIDO! Concatenación de strings con backticks
-            msg.style.left = `calc(${btn.style.left} + 10px)`;
-            msg.style.top = `calc(${btn.style.top} - 30px)`;
-            document.getElementById('galaxy-interface').appendChild(msg);
-            
-            setTimeout(() => msg.remove(), 1200);
+        class Point {
+            constructor(x = 0, y = 0) { this.x = x; this.y = y; }
+            clone() { return new Point(this.x, this.y); }
+            length(length) {
+                if (typeof length === 'undefined') return Math.sqrt(this.x * this.x + this.y * this.y);
+                this.normalize(); this.x *= length; this.y *= length; return this;
+            }
+            normalize() { const l = this.length(); this.x /= l; this.y /= l; return this; }
         }
 
-        // --- TRANSICIÓN FINAL AL JARDÍN DE FLORES ---
-        btn.addEventListener('click', (e) => {
+        function pointOnHeart(t) {
+            return new Point(
+                160 * Math.pow(Math.sin(t), 3),
+                130 * Math.cos(t) - 50 * Math.cos(2 * t) - 20 * Math.cos(3 * t) - 10 * Math.cos(4 * t)
+            );
+        }
+
+        class HeartParticle {
+            constructor() {
+                this.position = new Point();
+                this.velocity = new Point();
+                this.acceleration = new Point();
+                this.age = 0;
+            }
+            initialize(x, y, dx, dy) {
+                this.position.x = x; this.position.y = y;
+                this.velocity.x = dx; this.velocity.y = dy;
+                this.acceleration.x = dx * settings.particles.effect;
+                this.acceleration.y = dy * settings.particles.effect;
+                this.age = 0;
+            }
+            update(deltaTime) {
+                this.position.x += this.velocity.x * deltaTime;
+                this.position.y += this.velocity.y * deltaTime;
+                this.velocity.x += this.acceleration.x * deltaTime;
+                this.velocity.y += this.acceleration.y * deltaTime;
+                this.age += deltaTime;
+            }
+            draw(context) {
+                if (isTouching && mouseX !== null && mouseY !== null) {
+                    const absX = this.position.x + width / 2;
+                    const absY = -this.position.y + height / 2 + 30;
+                    const dx = mouseX - absX;
+                    const dy = mouseY - absY;
+                    if(Math.sqrt(dx * dx + dy * dy) < 80) {
+                        this.position.x += dx * 0.03;
+                        this.position.y -= dy * 0.03;
+                    }
+                }
+                const factor = (settings.particles.duration - this.age) / settings.particles.duration;
+                context.fillStyle = `rgba(0, 191, 255, ${factor})`; 
+                context.fillRect(this.position.x + width / 2, -this.position.y + height / 2 + 30, settings.particles.size, settings.particles.size);
+            }
+        }
+
+        const particlePool = {
+            firstActive: 0, firstFree: 0, duration: settings.particles.duration,
+            add: function(x, y, dx, dy) {
+                heartParticles[this.firstFree].initialize(x, y, dx, dy);
+                this.firstFree++; if (this.firstFree == heartParticles.length) this.firstFree = 0;
+                if (this.firstActive == this.firstFree) { this.firstActive++; if (this.firstActive == heartParticles.length) this.firstActive = 0; }
+            },
+            update: function(deltaTime) {
+                let i;
+                if (this.firstActive < this.firstFree) { for (i = this.firstActive; i < this.firstFree; i++) heartParticles[i].update(deltaTime); }
+                if (this.firstFree < this.firstActive) { for (i = this.firstActive; i < heartParticles.length; i++) heartParticles[i].update(deltaTime); for (i = 0; i < this.firstFree; i++) heartParticles[i].update(deltaTime); }
+                while (heartParticles[this.firstActive].age >= this.duration && this.firstActive != this.firstFree) { this.firstActive++; if (this.firstActive == heartParticles.length) this.firstActive = 0; }
+            },
+             draw: function(context) {
+                let i;
+                if (this.firstActive < this.firstFree) {
+                    for (i = this.firstActive; i < this.firstFree; i++) {
+                        heartParticles[i].draw(context);
+                    }
+                }
+                if (this.firstFree < this.firstActive) {
+                    for (i = this.firstActive; i < heartParticles.length; i++) {
+                        heartParticles[i].draw(context);
+                    }
+                    for (i = 0; i < this.firstFree; i++) {
+                        heartParticles[i].draw(context);
+                    }
+                }
+            }
+        };
+
+        for (let i = 0; i < settings.particles.length; i++) {
+            heartParticles.push(new HeartParticle());
+        }
+
+        let lastTime = null;
+        function loopHeart(timestamp) {
+            if (hCanvas.style.display === 'none') return;
+            requestAnimationFrame(loopHeart);
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+            hCtx.clearRect(0, 0, width, height);
+
+            const num = settings.particles.length * deltaTime / settings.particles.duration;
+            for (let i = 0; i < num; i++) {
+                const pos = pointOnHeart(Math.random() * Math.PI * 2);
+                const dir = pos.clone().length(settings.particles.velocity);
+                particlePool.add(pos.x, pos.y, dir.x, dir.y);
+            }
+            particlePool.update(deltaTime);
+            particlePool.draw(hCtx);
+        }
+
+        // ==========================================================================
+        // FLUJO Y TRANSICIONES ENTRE FASES
+        // ==========================================================================
+        btn.addEventListener('click', () => {
             if (escapeCount < maxEscapes) return;
 
-            const galaxyUI = document.getElementById('galaxy-interface');
-            const gardenUI = document.getElementById('garden-interface');
-
-            galaxyUI.style.opacity = '0';
-            canvas.style.transition = 'opacity 1.5s ease';
-            canvas.style.opacity = '0';
+            document.getElementById('galaxy-interface').style.opacity = '0';
+            gCanvas.style.transition = 'opacity 1.5s ease';
+            gCanvas.style.opacity = '0';
 
             setTimeout(() => {
-                galaxyUI.style.display = 'none';
-                canvas.style.display = 'none';
+                document.getElementById('galaxy-interface').style.display = 'none';
+                gCanvas.style.display = 'none';
+
+                hCanvas.style.display = 'block';
+                const heartUI = document.getElementById('heart-interface');
+                heartUI.style.display = 'block';
                 
-                gardenUI.style.display = 'flex';
+                requestAnimationFrame((t) => {
+                    hCanvas.style.opacity = '1';
+                    heartUI.style.opacity = '1';
+                    loopHeart(t);
+                });
+
                 setTimeout(() => {
-                    gardenUI.style.opacity = '1';
-                    startFlowerGarden();
-                }, 50);
+                    hCanvas.style.opacity = '0';
+                    heartUI.style.opacity = '0';
+
+                    setTimeout(() => {
+                        hCanvas.style.display = 'none';
+                        heartUI.style.display = 'none';
+
+                        const gardenUI = document.getElementById('garden-interface');
+                        gardenUI.style.display = 'flex';
+                        setTimeout(() => {
+                            gardenUI.style.opacity = '1';
+                            startFlowerGarden();
+                        }, 50);
+
+                    }, 1500);
+                }, 8000); 
+
             }, 1500);
         });
 
-        // --- SISTEMA DEL JARDÍN DIGITAL (FLORES Y PÉTALOS) ---
+        // ==========================================================================
+        // MOTOR FASE 3: JARDÍN VIRTUAL
+        // ==========================================================================
         function startFlowerGarden() {
             function createPetal() {
                 const petal = document.createElement('div');
@@ -475,24 +494,23 @@
                 petal.style.height = Math.random() * 15 + 10 + 'px';
                 petal.style.animationDuration = Math.random() * 3 + 4 + 's';
                 petal.style.opacity = Math.random() * 0.6 + 0.4;
-                
                 document.body.appendChild(petal);
                 setTimeout(() => petal.remove(), 6000);
             }
             setInterval(createPetal, 300);
 
             const bed = document.getElementById('gardenBed');
-            const totalFlowers = Math.floor(window.innerWidth / 50); 
-            
+            const totalFlowers = Math.floor(window.innerWidth / 50);
             for (let i = 0; i < totalFlowers; i++) {
                 setTimeout(() => {
                     const stem = document.createElement('div');
                     stem.classList.add('flower-stem');
                     const randomScale = Math.random() * 50 + 40;
-                    // ¡CORREGIDO! Sintaxis correcta para la transformación CSS
                     stem.style.transform = `scaleY(${randomScale})`;
                     bed.appendChild(stem);
-                }, i * 250); 
+                }, i * 250);
             }
         }
     </script>
+</body>
+</html>
