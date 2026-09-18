@@ -2663,7 +2663,7 @@ const Warp=(()=>{
     galas=[];
     const hues=[210,265,300,330,20,45,180,140,255];
     const GALSPR=hues.map(h=>makeGalaxySprite(h));
-    const NG=mob?44:70;
+       const NG=mob?24:34;
     for(let i=0;i<NG;i++){
       const [x,y]=randXY();
       galas.push({x,y,z:-3000-Math.random()*70000,
@@ -2671,7 +2671,7 @@ const Warp=(()=>{
         sz:280+Math.random()*800,rot:Math.random()*6.28,
               rotV:(0.09+Math.random()*0.15)*(Math.random()<.5?-1:1)});
     }
-    const NC=mob?4:7;
+        const NC=mob?3:4;
     for(let c=0;c<NC;c++){
       const [cx,cy]=randXY();
       const cz=-9000-Math.random()*60000;
@@ -3162,21 +3162,7 @@ function closeMem(){
   setTimeout(()=>{pop.style.display='none';Warp.resume();},520);  /* aquí arranca de nuevo */
 }
 
-function closeMem(){
-  clearTimeout(memTO);
-  const pop = document.getElementById('mem-popup-v2');
-  if (!pop) { paused = false; return; }
-  const card = pop.querySelector('.mv2-card');
-  if (card) shootBurst(card);
-  pop.classList.add('closing');
-  pop.classList.remove('open');
-  clearTimeout(memShotTO);
-  memShotTO = setTimeout(() => {
-    pop.style.display = 'none';
-    pop.classList.remove('closing');
-  }, 560);
-  paused = false;
-}
+
   
 /* ==================== CONTROLES DE NAVEGACIÓN ==================== */
 let uDrag=false,uLX=0,uLY=0,uMoved=0,uDownT=0;
