@@ -2419,27 +2419,82 @@ const MusicPiano=(()=>{
 
 /* ---------- POPUPS DE RECUERDOS ---------- */
 let paused=false, memTO=null;
+
+function ensureMemUI(){
+  if(!document.getElementById('mem-popup') || !document.getElementById('memImg')){
+    const style=document.createElement('style');
+    style.textContent=`
+      #mem-popup{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,2,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transition:opacity .5s ease}
+      #mem-popup.open{opacity:1}
+      .mem-card{position:relative;max-width:460px;width:100%;text-align:center;padding:clamp(24px,5vw,38px) clamp(18px,5vw,34px);border:1px solid rgba(255,179,198,.28);background:linear-gradient(180deg,rgba(18,12,28,.94),rgba(7,5,13,.97));box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 0 60px rgba(255,92,134,.08);transform:scale(.92) translateY(12px);transition:transform .55s cubic-bezier(.2,.9,.25,1.2)}
+      #mem-popup.open .mem-card{transform:none}
+      .mem-card .c{position:absolute;width:14px;height:14px;border-color:rgba(255,179,198,.7);border-style:solid}
+      .mc1{top:-1px;left:-1px;border-width:1px 0 0 1px}
+      .mc2{top:-1px;right:-1px;border-width:1px 1px 0 0}
+      .mc3{bottom:-1px;left:-1px;border-width:0 0 1px 1px}
+      .mc4{bottom:-1px;right:-1px;border-width:0 1px 1px 0}
+      .mem-title{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:clamp(1.35rem,5.2vw,1.9rem);color:#ffb3c6;text-shadow:0 0 22px rgba(255,92,134,.45)}
+      .mem-imgwrap{margin-top:14px;border:1px solid rgba(255,255,255,.14);padding:10px;border-radius:10px;background:rgba(255,255,255,.03)}
+      #memImg{display:block;width:100%;max-height:50vh;object-fit:contain;border-radius:6px}
+      #memFallback{display:none;padding:44px 14px;color:#8f8798;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:1rem;line-height:1.7}
+      .mem-hint{margin-top:12px;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:#9a93a6;font-family:Arial,sans-serif}
+      .mem-bar{margin-top:10px;height:2px;background:rgba(255,255,255,.09);border-radius:99px;overflow:hidden}
+      #memBar{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffb3c6,#ffd9e6)}`;
+    document.head.appendChild(style);
+    const wrap=document.createElement('div');
+    wrap.id='mem-popup';
+    wrap.innerHTML=`
+      <div class="mem-card">
+        <i class="c mc1"></i><i class="c mc2"></i><i class="c mc3"></i><i class="c mc4"></i>
+        <div class="mem-title" id="memTitle"></div>
+        <div class="mem-imgwrap">
+          <img id="memImg" alt="un recuerdo">
+          <div id="memFallback">La imagen no carg&oacute;,<br>pero el recuerdo sigue aqu&iacute; &#9829;</div>
+        </div>
+        <div class="mem-hint">toca para continuar</div>
+        <div class="mem-bar"><i id="memBar"></i></div>
+      </div>`;
+    document.body.appendChild(wrap);
+  }
+  if(!ensureMemUI._wired){
+    ensureMemUI._wired=true;
+    const img=document.getElementById('memImg');
+    const fb=document.getElementById('memFallback');
+    img.addEventListener('error',()=>{img.style.display='none';fb.style.display='block';});
+    img.addEventListener('load',()=>{fb.style.display='none';img.style.display='';});
+    document.getElementById('mem-popup').addEventListener('click',closeMem);
+  }
+}
+
 function openMem(i){
+  ensureMemUI();
+  const M=MEMORIES[i];
+  if(!M) return;
   paused=true;
-  const M=MEMORIES[i];if(!M){paused=false;return;}
   const pop=document.getElementById('mem-popup');
   const img=document.getElementById('memImg');
+  const fb=document.getElementById('memFallback');
   document.getElementById('memTitle').textContent=M.title;
-  img.style.display='';img.src=M.img;
+  fb.style.display='none';
+  img.style.display='';
+  img.src=M.img;
   pop.style.display='flex';
   requestAnimationFrame(()=>requestAnimationFrame(()=>pop.classList.add('open')));
   const bar=document.getElementById('memBar');
-  bar.style.transition='none';bar.style.width='100%';
+  bar.style.transition='none'; bar.style.width='100%';
   void bar.offsetWidth;
-  bar.style.transition='width 8s linear';bar.style.width='0%';
+  bar.style.transition='width 8s linear'; bar.style.width='0%';
   clearTimeout(memTO);
   memTO=setTimeout(closeMem,8300);
 }
+
 function closeMem(){
   clearTimeout(memTO);
   const pop=document.getElementById('mem-popup');
-  pop.classList.remove('open');
-  setTimeout(()=>{pop.style.display='none';},520);
+  if(pop){
+    pop.classList.remove('open');
+    setTimeout(()=>{pop.style.display='none';},520);
+  }
   paused=false;
 }
 
