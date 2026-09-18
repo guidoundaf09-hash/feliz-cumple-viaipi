@@ -2576,12 +2576,12 @@ function buildAll(){
 
   /* NUEVO — CAPA WARP: estrellitas MUY cercanas al rumbo que pasan rozando
      la cámara. Son las que dan la verdadera sensación de velocidad luz. */
-  const NW=mob?340:560;
+  const NW=mob?240:360;
   for(let i=0;i<NW;i++){
     const a=Math.random()*6.2832;
-    const r=90+Math.pow(Math.random(),1.6)*520;
-    bgStars.push({x:Math.cos(a)*r,y:Math.sin(a)*r*0.8,z:-Math.random()*22000,
-      s:0.7+Math.random()*1.2,tw:Math.random()*6.28,twS:2+Math.random()*3,
+    const r=170+Math.pow(Math.random(),1.6)*560;
+    bgStars.push({x:Math.cos(a)*r,y:Math.sin(a)*r*0.8,z:-2500-Math.random()*22000,
+      s:0.6+Math.random()*1.0,tw:Math.random()*6.28,twS:2+Math.random()*3,
       spr:Math.random()<.6?SPR.white:SPR.blue,near:true});
   }
 
@@ -2644,20 +2644,20 @@ function buildAll(){
   /* Nebulosas + banda difusa tipo "vía láctea" */
   nebulas=[];
   const cols=['170,110,255','255,110,190','110,190,255','255,170,110','200,120,255','120,230,210','150,130,255','255,140,140'];
-  const NN=mob?22:34;
+    const NN=mob?14:20;
   for(let i=0;i<NN;i++){
     const [x,y]=randXY();
-    nebulas.push({x,y,z:-8000-Math.random()*68000,
+    nebulas.push({x,y,z:-16000-Math.random()*64000,
       spr:makeNebW(cols[(Math.random()*cols.length)|0]),
-      sz:9000+Math.random()*13000,al:0.22+Math.random()*0.32});
+      sz:9000+Math.random()*13000,al:0.10+Math.random()*0.10});
   }
-  for(let i=0;i<(mob?12:20);i++){
-    const t=(i/(mob?12:20))*6.2832;
-    const r=2600+Math.random()*1400;
-    nebulas.push({x:Math.cos(t)*r,y:Math.sin(t)*r*0.32,
+   for(let i=0;i<(mob?10:16);i++){
+    const t=(i/(mob?10:16))*6.2832;
+    const r=4200+Math.random()*1800;
+    nebulas.push({x:Math.cos(t)*r,y:Math.sin(t)*r*0.45,
       z:-30000-Math.random()*40000,
       spr:makeNebW(cols[(Math.random()*cols.length)|0]),
-      sz:15000+Math.random()*9000,al:0.10+Math.random()*0.10});
+      sz:15000+Math.random()*9000,al:0.05+Math.random()*0.05});
   }
 
   /* Planetas de recuerdo (ligados a STOPS: abren el popup con la foto) */
