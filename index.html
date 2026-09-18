@@ -1562,13 +1562,13 @@ const Universe = (() => {
       disc.push(mkPart(r, Math.random()*6.2832, gauss()*6*(r/DISC_OUT+0.3),
         2.1*Math.pow(DISC_IN/r,1.5), spr, 3+(1-t)*3+Math.random()*1.4, 'disc'));
     }
-    const NH = mob?170:290;   // polvo cósmico de colores (halo)
+   const NH = mob?320:560;  // polvo cósmico de colores (halo)
     for(let i=0;i<NH;i++){
       const r=380+Math.random()*2100, rr=Math.random();
       dust.push(mkPart(r, Math.random()*6.2832, gauss()*130,
         0.05/(1+r/900), rr<.4?SPR.dP:rr<.75?SPR.dV:SPR.dB, 55+Math.random()*95, 'dust', 0.05+Math.random()*0.05));
     }
-    const NB = mob?750:1250;  // cielo profundo
+    const NB = mob?1500:2600; // cielo profundo
     for(let i=0;i<NB;i++){
       const th=Math.random()*6.2832, ph=Math.acos(2*Math.random()-1), rr=Math.random();
       bgStars.push({ x:Math.sin(ph)*Math.cos(th)*26000, y:Math.cos(ph)*26000, z:Math.sin(ph)*Math.sin(th)*26000,
@@ -1581,6 +1581,13 @@ const Universe = (() => {
         nebulae.push({ spr:makeNeb(n[0]),
           x:Math.sin(ph)*Math.cos(th)*24000, y:Math.cos(ph)*24000, z:Math.sin(ph)*Math.sin(th)*24000,
           s:9000+Math.random()*9000, al:.3+Math.random()*.38 });
+      });
+        [['255,150,210'],['140,170,255'],['255,200,140'],['170,255,220'],['255,140,140'],['180,140,255']]
+      .forEach(n=>{
+        const th=Math.random()*6.2832, ph=Math.acos(2*Math.random()-1);
+        nebulae.push({ spr:makeNeb(n[0]),
+          x:Math.sin(ph)*Math.cos(th)*30000, y:Math.cos(ph)*30000, z:Math.sin(ph)*Math.sin(th)*30000,
+          s:13000+Math.random()*11000, al:.16+Math.random()*.2 });
       });
     nextMeteor=2.5;
   }
@@ -1716,7 +1723,11 @@ const Universe = (() => {
     uCtx.globalCompositeOperation='source-over';
 
     nextMeteor-=dt;
-    if(nextMeteor<=0){ spawnMeteor(); nextMeteor=2.2+Math.random()*3.8; }
+    if(nextMeteor<=0){
+  spawnMeteor();
+  if(Math.random()<0.4) spawnMeteor();
+  nextMeteor=0.7+Math.random()*1.7;
+}
 
     dN=0; lensed.length=0;
     for(const p of gal)  step(p,dt,t);
@@ -1817,14 +1828,14 @@ const TitleFX = (() => {
   const D   = { over:makeDot(COL.over), name:makeDot(COL.name), last:makeDot(COL.last), sub:makeDot(COL.sub) };
 
   /* Mismo diseño tipográfico del título original */
-  const LINES_DEF = [
-    { txt:'FELICES 21 AÑOS', up:true,  tr:.55, k:.26, gap:.26, col:COL.over, dot:D.over, glow:14,
+const LINES_DEF = [
+    { txt:'FELICES 21 AÑOS', up:true,  tr:.50, k:.28, gap:.30, col:COL.over, dot:D.over, glow:14,
       f:fz=>`500 ${fz}px Jost,'Segoe UI',Arial,sans-serif` },
-    { txt:'Zharick Abigail', up:false, tr:.015,k:1,   gap:.06, col:COL.name, dot:D.name, glow:22,
+    { txt:'Zharick Abigail', up:false, tr:.012,k:.28, gap:.20, col:COL.name, dot:D.name, glow:20,
       f:fz=>`600 ${fz}px 'Cormorant Garamond',Georgia,serif` },
-    { txt:'Pérez Velasco',   up:false, tr:.08, k:.60, gap:.24, col:COL.last, dot:D.last, glow:18,
+    { txt:'Pérez Velasco',   up:false, tr:.03, k:.20, gap:.28, col:COL.last, dot:D.last, glow:16,
       f:fz=>`italic 500 ${fz}px 'Cormorant Garamond',Georgia,serif` },
-    { txt:'— un universo entero, girando solo para ti —', up:false, tr:.02, k:.34, gap:0, col:COL.sub, dot:D.sub, glow:10,
+    { txt:'— un universo entero, girando solo para ti —', up:false, tr:.012,k:.20, gap:0, col:COL.sub, dot:D.sub, glow:10,
       f:fz=>`italic 500 ${fz}px 'Cormorant Garamond',Georgia,serif` }
   ];
 
@@ -2418,85 +2429,7 @@ const MusicPiano=(()=>{
 })();
 
 /* ---------- POPUPS DE RECUERDOS ---------- */
-let paused=false, memTO=null;
 
-function ensureMemUI(){
-  if(!document.getElementById('mem-popup') || !document.getElementById('memImg')){
-    const style=document.createElement('style');
-    style.textContent=`
-      #mem-popup{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,2,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transition:opacity .5s ease}
-      #mem-popup.open{opacity:1}
-      .mem-card{position:relative;max-width:460px;width:100%;text-align:center;padding:clamp(24px,5vw,38px) clamp(18px,5vw,34px);border:1px solid rgba(255,179,198,.28);background:linear-gradient(180deg,rgba(18,12,28,.94),rgba(7,5,13,.97));box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 0 60px rgba(255,92,134,.08);transform:scale(.92) translateY(12px);transition:transform .55s cubic-bezier(.2,.9,.25,1.2)}
-      #mem-popup.open .mem-card{transform:none}
-      .mem-card .c{position:absolute;width:14px;height:14px;border-color:rgba(255,179,198,.7);border-style:solid}
-      .mc1{top:-1px;left:-1px;border-width:1px 0 0 1px}
-      .mc2{top:-1px;right:-1px;border-width:1px 1px 0 0}
-      .mc3{bottom:-1px;left:-1px;border-width:0 0 1px 1px}
-      .mc4{bottom:-1px;right:-1px;border-width:0 1px 1px 0}
-      .mem-title{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:clamp(1.35rem,5.2vw,1.9rem);color:#ffb3c6;text-shadow:0 0 22px rgba(255,92,134,.45)}
-      .mem-imgwrap{margin-top:14px;border:1px solid rgba(255,255,255,.14);padding:10px;border-radius:10px;background:rgba(255,255,255,.03)}
-      #memImg{display:block;width:100%;max-height:50vh;object-fit:contain;border-radius:6px}
-      #memFallback{display:none;padding:44px 14px;color:#8f8798;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:1rem;line-height:1.7}
-      .mem-hint{margin-top:12px;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:#9a93a6;font-family:Arial,sans-serif}
-      .mem-bar{margin-top:10px;height:2px;background:rgba(255,255,255,.09);border-radius:99px;overflow:hidden}
-      #memBar{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffb3c6,#ffd9e6)}`;
-    document.head.appendChild(style);
-    const wrap=document.createElement('div');
-    wrap.id='mem-popup';
-    wrap.innerHTML=`
-      <div class="mem-card">
-        <i class="c mc1"></i><i class="c mc2"></i><i class="c mc3"></i><i class="c mc4"></i>
-        <div class="mem-title" id="memTitle"></div>
-        <div class="mem-imgwrap">
-          <img id="memImg" alt="un recuerdo">
-          <div id="memFallback">La imagen no carg&oacute;,<br>pero el recuerdo sigue aqu&iacute; &#9829;</div>
-        </div>
-        <div class="mem-hint">toca para continuar</div>
-        <div class="mem-bar"><i id="memBar"></i></div>
-      </div>`;
-    document.body.appendChild(wrap);
-  }
-  if(!ensureMemUI._wired){
-    ensureMemUI._wired=true;
-    const img=document.getElementById('memImg');
-    const fb=document.getElementById('memFallback');
-    img.addEventListener('error',()=>{img.style.display='none';fb.style.display='block';});
-    img.addEventListener('load',()=>{fb.style.display='none';img.style.display='';});
-    document.getElementById('mem-popup').addEventListener('click',closeMem);
-  }
-}
-
-function openMem(i){
-  ensureMemUI();
-  const M=MEMORIES[i];
-  if(!M) return;
-  paused=true;
-  const pop=document.getElementById('mem-popup');
-  const img=document.getElementById('memImg');
-  const fb=document.getElementById('memFallback');
-  document.getElementById('memTitle').textContent=M.title;
-  fb.style.display='none';
-  img.style.display='';
-  img.src=M.img;
-  pop.style.display='flex';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>pop.classList.add('open')));
-  const bar=document.getElementById('memBar');
-  bar.style.transition='none'; bar.style.width='100%';
-  void bar.offsetWidth;
-  bar.style.transition='width 8s linear'; bar.style.width='0%';
-  clearTimeout(memTO);
-  memTO=setTimeout(closeMem,8300);
-}
-
-function closeMem(){
-  clearTimeout(memTO);
-  const pop=document.getElementById('mem-popup');
-  if(pop){
-    pop.classList.remove('open');
-    setTimeout(()=>{pop.style.display='none';},520);
-  }
-  paused=false;
-}
 
 /* ---------- MOTOR DEL VIAJE ---------- */
 const Warp=(()=>{
@@ -2594,6 +2527,7 @@ const DT=0.02,TMAX=94;let zT=[];
   let camZ=0,heartT0=0;
   let bgStars=[],galas=[],systems=[],nebulas=[],planets=[],shoots=[],nextShoot=1.2;
   let heartP=[];
+  let finaleP = [], finaleFlash = false, finaleTextT = null;
   const F=()=>H*1.15;
   const randXY=()=>{const a=Math.random()*6.2832;const r=650+Math.pow(Math.random(),0.7)*3600;
     return [Math.cos(a)*r,Math.sin(a)*r*0.7];};
@@ -2699,60 +2633,85 @@ function buildAll(){
 
   shoots=[];nextShoot=0.8;heartP=[];
 }
-  function buildHeart(){
-  const N=Math.min(W,H)<520?760:1100;
-  const S=Math.min(W,H)*0.17;
-  const hy=t=>13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
-  const hx=t=>16*Math.pow(Math.sin(t),3);
-  heartP=[];
+function buildHeart(){
+  const N = Math.min(W,H)<520 ? 900 : 1400;
+  finaleP = [];
   for(let i=0;i<N;i++){
-    let x,y;
-    if(Math.random()<0.55){const t=Math.random()*6.2832;x=hx(t);y=-hy(t);}
-    else{const t=Math.random()*6.2832,k=Math.sqrt(Math.random());x=hx(t)*k;y=-hy(t)*k;}
-    const ang=Math.random()*6.2832;
-    const rad=Math.max(W,H)*0.62+Math.random()*260;
-    heartP.push({hx:x*S,hy:y*S,tx:W/2+x*S,ty:H/2+y*S,
-      x:W/2+Math.cos(ang)*rad,y:H/2+Math.sin(ang)*rad,
-      vx:0,vy:0,sz:1.6+Math.random()*1.6,
-      spr:Math.random()<.8?dotP:dotW,
-      tw:Math.random()*6.28,twS:2+Math.random()*3});
+    const ang = Math.random()*6.2832;
+    const rad = Math.max(W,H)*0.55 + Math.random()*260;
+    finaleP.push({
+      a: ang, r: rad,
+      spin: (Math.random()<0.5?1:-1) * (0.6+Math.random()*1.1),
+      shrink: 0.55+Math.random()*0.35,
+      sz: 1.8+Math.random()*2.6,
+      spr: Math.random()<0.55?dotP:dotW,
+      tw: Math.random()*6.28, twS: 2+Math.random()*3,
+      delay: Math.random()*0.6
+    });
   }
+  finaleFlash = false; finaleTextT = null;
 }
 
-function drawHeart(dt,th){
-  /* Reinicio defensivo: evita heredar alpha/composite de otro frame */
+function drawHeart(dt, th){
   wCtx.globalAlpha=1;
   wCtx.globalCompositeOperation='source-over';
-  wCtx.fillStyle='#000';wCtx.fillRect(0,0,W,H);
+  wCtx.fillStyle='#000'; wCtx.fillRect(0,0,W,H);
 
-  /* Latido real "lub-dub": dos golpes cortos y una pausa, como un corazón real */
-  const cyc=1.05;
-  const ph=(th%cyc)/cyc;
-  const lub=Math.exp(-Math.pow((ph-0.06)*11,2));
-  const dub=Math.exp(-Math.pow((ph-0.22)*13,2))*0.7;
-  const pulse=lub+dub;
-  const beat=1+0.16*pulse;   // hasta +16%: ahora sí se nota
+  if(!finaleP.length) buildHeart();
+
+  const cx=W/2, cy=H/2;
+  const collapse = Math.min(1, Math.max(0, (th-0.3)/3.4));
 
   wCtx.globalCompositeOperation='screen';
-  wCtx.globalAlpha=0.16+0.10*pulse;
-  const gs=Math.min(W,H)*(0.62+0.10*pulse);
-  wCtx.drawImage(heartGlow,W/2-gs/2,H/2-gs/2,gs,gs);
+  const coreA = 0.10 + 0.55*collapse*collapse;
+  const gs = Math.min(W,H)*(0.10+0.55*collapse);
+  wCtx.globalAlpha = coreA;
+  wCtx.drawImage(heartGlow, cx-gs/2, cy-gs/2, gs, gs);
 
-  if(!heartP.length) buildHeart(); // salvaguarda por si nunca se llenó
-
-  for(const p of heartP){
-    if(th<2.4){
-      p.vx+=(p.tx-p.x)*6*dt;p.vy+=(p.ty-p.y)*6*dt;
-      const d=Math.exp(-3.2*dt);p.vx*=d;p.vy*=d;
-      p.x+=p.vx*dt;p.y+=p.vy*dt;
-    }else{p.x=p.tx;p.y=p.ty;}
-    const x=W/2+(p.x-W/2)*beat,y=H/2+(p.y-H/2)*beat;
-    const s=2.6+p.sz*1.8*(1+0.35*pulse);
-    wCtx.globalAlpha=Math.min(1,th/1.5)*(0.55+0.45*Math.sin(p.tw+th*p.twS))*(0.85+0.3*pulse);
-    wCtx.drawImage(p.spr,x-s/2,y-s/2,s,s);
+  for(const p of finaleP){
+    if(th>p.delay){
+      const k = Math.min(1,(th-p.delay)/3.2);
+      const ease = k*k*(3-2*k);
+      p.curR = p.r*(1-ease*p.shrink*1.02);
+      p.curA = p.a + p.spin*th;
+    }
+    const rr = Math.max(0, p.curR!==undefined ? p.curR : p.r);
+    const x = cx+Math.cos(p.curA||p.a)*rr;
+    const y = cy+Math.sin(p.curA||p.a)*rr*0.86;
+    const s = p.sz*(1+collapse*1.4);
+    const tw = 0.55+0.45*Math.sin(p.tw+th*p.twS);
+    wCtx.globalAlpha = Math.min(1, th/1.2)*tw*(0.5+0.5*collapse);
+    wCtx.drawImage(p.spr, x-s/2, y-s/2, s, s);
   }
   wCtx.globalAlpha=1;
   wCtx.globalCompositeOperation='source-over';
+
+  if(th>=3.6 && !finaleFlash){
+    finaleFlash = true;
+    const flash=document.getElementById('nova-flash');
+    flash.classList.add('on');
+    setTimeout(()=>flash.classList.remove('on'), 640);
+    finaleTextT = th;
+  }
+  if(finaleTextT!==null){
+    const tt = th - finaleTextT;
+    const a = Math.min(1, Math.max(0, (tt-0.5)/1.2));
+    if(a>0){
+      wCtx.save();
+      wCtx.textAlign='center'; wCtx.textBaseline='middle';
+      const pulse = 0.9+0.1*Math.sin(tt*1.6);
+      wCtx.globalAlpha = a*pulse;
+      wCtx.font = `600 ${Math.min(64,W*0.09)}px 'Cormorant Garamond',Georgia,serif`;
+      wCtx.shadowColor='rgba(255,150,190,.9)'; wCtx.shadowBlur=34;
+      wCtx.fillStyle='#fff';
+      wCtx.fillText('FELICES 21 AÑOS', cx, cy-26);
+      wCtx.font = `italic 500 ${Math.min(30,W*0.045)}px 'Cormorant Garamond',Georgia,serif`;
+      wCtx.shadowBlur=20;
+      wCtx.fillStyle='#ffd9e6';
+      wCtx.fillText('Zharick Abigail', cx, cy+30);
+      wCtx.restore();
+    }
+  }
 }
   function drawAurora(th,al){
     wCtx.save();
@@ -2972,16 +2931,126 @@ function startMemories(){
   },430);
 }
 
-/* imagen que falla → aviso elegante */
-document.getElementById('memImg').addEventListener('error',()=>{
-  document.getElementById('memImg').style.display='none';
-  document.getElementById('memFallback').style.display='block';
-});
-document.getElementById('memImg').addEventListener('load',()=>{
-  document.getElementById('memFallback').style.display='none';
-  document.getElementById('memImg').style.display='';
-});
-document.getElementById('mem-popup').addEventListener('click',closeMem);
+let paused = false, memTO = null, memShotTO = null;
+
+function ensureMemUI(){
+  if (document.getElementById('mem-popup-v2')) return;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #mem-popup-v2{position:fixed;inset:0;z-index:99998;display:none;align-items:center;justify-content:center;
+      padding:18px;background:rgba(2,2,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      opacity:0;transition:opacity .5s ease;font-family:'Jost',Arial,sans-serif}
+    #mem-popup-v2.open{opacity:1}
+    #mem-popup-v2 .mv2-card{position:relative;max-width:460px;width:100%;text-align:center;
+      padding:clamp(24px,5vw,38px) clamp(18px,5vw,34px);border:1px solid rgba(255,179,198,.28);
+      background:linear-gradient(180deg,rgba(18,12,28,.94),rgba(7,5,13,.97));
+      box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 0 60px rgba(255,92,134,.08);
+      transform:scale(.92) translateY(12px);opacity:1;
+      transition:transform .55s cubic-bezier(.2,.9,.25,1.2),opacity .4s ease}
+    #mem-popup-v2.open .mv2-card{transform:none}
+    #mem-popup-v2.closing .mv2-card{opacity:0;transform:scale(.85) translateY(-8px);transition:transform .5s ease,opacity .4s ease}
+    #mem-popup-v2 .mv2-c{position:absolute;width:14px;height:14px;border-color:rgba(255,179,198,.7);border-style:solid}
+    #mem-popup-v2 .mv2-c1{top:-1px;left:-1px;border-width:1px 0 0 1px}
+    #mem-popup-v2 .mv2-c2{top:-1px;right:-1px;border-width:1px 1px 0 0}
+    #mem-popup-v2 .mv2-c3{bottom:-1px;left:-1px;border-width:0 0 1px 1px}
+    #mem-popup-v2 .mv2-c4{bottom:-1px;right:-1px;border-width:0 1px 1px 0}
+    #mem-popup-v2 .mv2-title{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;
+      font-size:clamp(1.35rem,5.2vw,1.9rem);color:#ffb3c6;text-shadow:0 0 22px rgba(255,92,134,.45)}
+    #mem-popup-v2 .mv2-imgwrap{margin-top:14px;border:1px solid rgba(255,255,255,.14);padding:10px;
+      border-radius:10px;background:rgba(255,255,255,.03)}
+    #mem-popup-v2 .mv2-imgwrap img{display:block;width:100%;max-height:50vh;object-fit:contain;border-radius:6px}
+    #mem-popup-v2 .mv2-fallback{display:none;padding:44px 14px;color:#8f8798;
+      font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:1rem;line-height:1.7}
+    #mem-popup-v2 .mv2-hint{margin-top:12px;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:#9a93a6}
+    #mem-popup-v2 .mv2-barwrap{margin-top:10px;height:2px;background:rgba(255,255,255,.09);
+      border-radius:99px;overflow:hidden}
+    #mem-popup-v2 .mv2-bar{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffb3c6,#ffd9e6)}
+    .mem-shoot{position:fixed;z-index:99999;width:3px;height:3px;border-radius:50%;background:#fff;
+      box-shadow:0 0 10px 2px rgba(255,205,225,.95);pointer-events:none;
+      animation:memShoot .85s cubic-bezier(.15,.7,.3,1) forwards}
+    @keyframes memShoot{
+      0%{opacity:1;transform:translate(0,0) scale(1)}
+      100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.15)}
+    }
+  `;
+  document.head.appendChild(style);
+
+  const wrap = document.createElement('div');
+  wrap.id = 'mem-popup-v2';
+  wrap.innerHTML = `
+    <div class="mv2-card">
+      <i class="mv2-c mv2-c1"></i><i class="mv2-c mv2-c2"></i><i class="mv2-c mv2-c3"></i><i class="mv2-c mv2-c4"></i>
+      <div class="mv2-title" id="mv2Title"></div>
+      <div class="mv2-imgwrap">
+        <img id="mv2Img" alt="un recuerdo">
+        <div class="mv2-fallback" id="mv2Fallback">La imagen no cargó,<br>pero el recuerdo sigue aquí ♥</div>
+      </div>
+      <div class="mv2-hint">un momento tuyo</div>
+      <div class="mv2-barwrap"><div class="mv2-bar" id="mv2Bar"></div></div>
+    </div>`;
+  document.body.appendChild(wrap);
+
+  const img = document.getElementById('mv2Img');
+  const fb  = document.getElementById('mv2Fallback');
+  img.addEventListener('error', () => { img.style.display = 'none'; fb.style.display = 'block'; });
+  img.addEventListener('load',  () => { fb.style.display = 'none';  img.style.display = '';    });
+}
+
+function shootBurst(fromEl){
+  const r = fromEl.getBoundingClientRect();
+  const cx = r.left + r.width/2, cy = r.top + r.height/2;
+  for (let i = 0; i < 16; i++){
+    const s = document.createElement('i');
+    s.className = 'mem-shoot';
+    const ang = Math.random()*Math.PI*2;
+    const dist = 120 + Math.random()*260;
+    s.style.left = (cx + (Math.random()-0.5)*r.width*0.7) + 'px';
+    s.style.top  = (cy + (Math.random()-0.5)*r.height*0.7) + 'px';
+    s.style.setProperty('--dx', (Math.cos(ang)*dist).toFixed(1) + 'px');
+    s.style.setProperty('--dy', (Math.sin(ang)*dist - 40).toFixed(1) + 'px');
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  }
+}
+
+function openMem(i){
+  ensureMemUI();
+  paused = true;
+  const M = MEMORIES[i]; if (!M) { paused = false; return; }
+  const pop = document.getElementById('mem-popup-v2');
+  const img = document.getElementById('mv2Img');
+  const fb  = document.getElementById('mv2Fallback');
+  document.getElementById('mv2Title').textContent = M.title;
+  fb.style.display = 'none';
+  img.style.display = '';
+  img.src = M.img;
+  pop.classList.remove('closing');
+  pop.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => pop.classList.add('open')));
+  const bar = document.getElementById('mv2Bar');
+  bar.style.transition = 'none'; bar.style.width = '100%';
+  void bar.offsetWidth;
+  bar.style.transition = 'width 8s linear'; bar.style.width = '0%';
+  clearTimeout(memTO);
+  memTO = setTimeout(closeMem, 8300);
+}
+
+function closeMem(){
+  clearTimeout(memTO);
+  const pop = document.getElementById('mem-popup-v2');
+  if (!pop) { paused = false; return; }
+  const card = pop.querySelector('.mv2-card');
+  if (card) shootBurst(card);
+  pop.classList.add('closing');
+  pop.classList.remove('open');
+  clearTimeout(memShotTO);
+  memShotTO = setTimeout(() => {
+    pop.style.display = 'none';
+    pop.classList.remove('closing');
+  }, 560);
+  paused = false;
+}
   
 /* ==================== CONTROLES DE NAVEGACIÓN ==================== */
 let uDrag=false,uLX=0,uLY=0,uMoved=0,uDownT=0;
