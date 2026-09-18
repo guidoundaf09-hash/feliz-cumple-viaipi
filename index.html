@@ -2298,11 +2298,98 @@ bhLetter.addEventListener('click',()=>{ if(!bhDone) bhFinish(); });
 
 /* ★★★ AQUÍ VAN TUS FOTOS: reemplaza cada enlace por el DIRECT LINK
    de ImgBB (botón "Direct link" → https://i.ibb.co/xxxx/foto.jpg) ★★★ */
+/* ---------- TUS FOTOS (enlaces DIRECTOS de ImgBB) ---------- */
 const MEMORIES=[
-  { img:'https://i.ibb.co/pBYHVk58/Whats-App-Image-2026-09-18-at-12-08-13-AM.jpg', title:'Bonita\u00f3' },
+  { img:'https://i.ibb.co/pBYHVk58/Whats-App-Image-2026-09-18-at-12-08-13-AM.jpg', title:'Bonita' },
   { img:'https://i.ibb.co/mrdzDWxq/Whats-App-Image-2026-09-18-at-12-09-03-AM.jpg', title:'Un momento para siempre' },
   { img:'https://i.ibb.co/mrm5cHxJ/Whats-App-Image-2026-09-18-at-12-10-49-AM.jpg', title:'Aqui estoy' }
 ];
+
+/* ---------- POPUP AUTOSUFICIENTE: se crea solo, sin tocar tu HTML ---------- */
+function ensureMemUI(){
+  if (document.getElementById('mem-popup')) return; // ya existe, no lo dupliques
+
+  const style = document.createElement('style');
+  style.id = 'mem-popup-style';
+  style.textContent = `
+    #mem-popup{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+      padding:22px;background:rgba(3,2,10,.68);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      opacity:0;transition:opacity .5s ease;font-family:'Jost',Arial,sans-serif}
+    #mem-popup.open{opacity:1}
+    #mem-popup .mem-card{position:relative;max-width:440px;width:100%;padding:22px 22px 26px;
+      border:1px solid rgba(255,255,255,.16);background:linear-gradient(160deg,rgba(20,14,32,.96),rgba(9,6,18,.98));
+      box-shadow:0 30px 90px rgba(0,0,0,.65);border-radius:2px;
+      transform:translateY(20px) scale(.96);opacity:0;transition:transform .55s cubic-bezier(.2,.9,.3,1),opacity .55s ease;
+      text-align:center}
+    #mem-popup.open .mem-card{transform:none;opacity:1}
+    #mem-popup .mem-c{position:absolute;width:15px;height:15px;border-color:rgba(255,179,198,.75);border-style:solid}
+    #mem-popup .m1{top:-1px;left:-1px;border-width:1px 0 0 1px}
+    #mem-popup .m2{top:-1px;right:-1px;border-width:1px 1px 0 0}
+    #mem-popup .m3{bottom:-1px;left:-1px;border-width:0 0 1px 1px}
+    #mem-popup .m4{bottom:-1px;right:-1px;border-width:0 1px 1px 0}
+    #mem-popup .mem-imgwrap{width:100%;aspect-ratio:4/3;overflow:hidden;background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.1)}
+    #mem-popup .mem-imgwrap img{width:100%;height:100%;object-fit:cover;display:block}
+    #mem-popup .mem-fallback{display:none;width:100%;height:100%;align-items:center;justify-content:center;
+      color:#8b8398;font-size:.8rem;letter-spacing:.06em;padding:14px;text-align:center}
+    #mem-popup h3{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;
+      font-size:clamp(1.35rem,5.5vw,1.8rem);color:#fff;margin-top:16px}
+    #mem-popup .mem-barwrap{margin-top:16px;height:2px;width:100%;background:rgba(255,255,255,.12);
+      overflow:hidden;border-radius:2px}
+    #mem-popup .mem-bar{height:100%;width:100%;background:linear-gradient(90deg,#ffb3c6,#ffd9a8)}
+  `;
+  document.head.appendChild(style);
+
+  const wrap = document.createElement('div');
+  wrap.id = 'mem-popup';
+  wrap.innerHTML = `
+    <div class="mem-card">
+      <i class="mem-c m1"></i><i class="mem-c m2"></i><i class="mem-c m3"></i><i class="mem-c m4"></i>
+      <div class="mem-imgwrap">
+        <img id="memImg" alt="recuerdo">
+        <div class="mem-fallback" id="memFallback">La imagen no cargó,<br>pero el recuerdo sigue aquí ♥</div>
+      </div>
+      <h3 id="memTitle"></h3>
+      <div class="mem-barwrap"><div class="mem-bar" id="memBar"></div></div>
+    </div>`;
+  document.body.appendChild(wrap);
+
+  const img = document.getElementById('memImg');
+  const fb  = document.getElementById('memFallback');
+  img.addEventListener('error', () => { img.style.display='none'; fb.style.display='flex'; });
+  img.addEventListener('load',  () => { fb.style.display='none';  img.style.display='';    });
+  wrap.addEventListener('click', closeMem);
+}
+
+let memTO=null;
+function openMem(i){
+  ensureMemUI();
+  paused=true;
+  const M=MEMORIES[i]; if(!M){ paused=false; return; }
+  const pop=document.getElementById('mem-popup');
+  const img=document.getElementById('memImg');
+  const fb =document.getElementById('memFallback');
+  document.getElementById('memTitle').textContent=M.title;
+  fb.style.display='none';
+  img.style.display='';
+  img.src=M.img;
+  pop.style.display='flex';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>pop.classList.add('open')));
+  const bar=document.getElementById('memBar');
+  bar.style.transition='none'; bar.style.width='100%';
+  void bar.offsetWidth;
+  bar.style.transition='width 8s linear'; bar.style.width='0%';
+  clearTimeout(memTO);
+  memTO=setTimeout(closeMem,8300);
+}
+function closeMem(){
+  clearTimeout(memTO);
+  const pop=document.getElementById('mem-popup');
+  if(!pop) { paused=false; return; }
+  pop.classList.remove('open');
+  setTimeout(()=>{ pop.style.display='none'; },520);
+  paused=false;
+}
 /* Precarga: las fotos ya están listas cuando llega el popup */
 MEMORIES.forEach(m=>{ const im=new Image(); im.src=m.img; });
 
