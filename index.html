@@ -2435,7 +2435,7 @@ const MusicPiano=(()=>{
 const Warp=(()=>{
  const STOPS=[{t:14,mem:0},{t:42,mem:1},{t:70,mem:2}];
 const TITLE_T=84,FINALE_T=90;
-const V=[900,1080,1240,1400];
+const V=[2200,2600,3000,3500];
 const sm=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x);};
 function speedAt(t){
   if(t<4)return V[0]*sm(t/4);
@@ -2528,7 +2528,8 @@ const DT=0.02,TMAX=94;let zT=[];
   let bgStars=[],galas=[],systems=[],nebulas=[],planets=[],shoots=[],nextShoot=1.2;
   let heartP=[];
   let finaleP = [], finaleFlash = false, finaleTextT = null;
-  const F=()=>H*1.15;
+   let curV=0;
+  const F=()=>H*(1.15+Math.min(0.25,curV/12000));
   const randXY=()=>{const a=Math.random()*6.2832;const r=650+Math.pow(Math.random(),0.7)*3600;
     return [Math.cos(a)*r,Math.sin(a)*r*0.7];};
 
@@ -2537,7 +2538,7 @@ function buildAll(){
 
   /* Estrellas: dos capas (cercana + campo profundo) para que nunca se vea vacío */
   bgStars=[];
-  const NB=mob?900:1600;
+  const NB=mob?1000:2000;
   for(let i=0;i<NB;i++){
     const [x,y]=randXY();
     bgStars.push({x,y,z:-Math.random()*80000,s:1+Math.random()*2.2,
@@ -2552,18 +2553,44 @@ function buildAll(){
       spr:Math.random()<.5?SPR.white:SPR.blue});
   }
 
-  /* Galaxias sueltas + clústeres (grupos de 4-6 muy juntas) */
+  /* NUEVO — CAPA WARP: estrellitas MUY cercanas al rumbo que pasan rozando
+     la cámara. Son las que dan la verdadera sensación de velocidad luz. */
+  const NW=mob?340:560;
+  for(let i=0;i<NW;i++){
+    const a=Math.random()*6.2832;
+    const r=90+Math.pow(Math.random(),1.6)*520;
+    bgStars.push({x:Math.cos(a)*r,y:Math.sin(a)*r*0.8,z:-Math.random()*22000,
+      s:0.7+Math.random()*1.2,tw:Math.random()*6.28,twS:2+Math.random()*3,
+      spr:Math.random()<.6?SPR.white:SPR.blue,near:true});
+  }
+
+  /* NUEVO — CLÚSTERES: grupitos densos de estrellas que pasan como joyas */
+  const NCL=mob?8:14;
+  for(let c=0;c<NCL;c++){
+    const [qx,qy]=randXY();
+    const qz=-8000-Math.random()*70000;
+    const n=14+((Math.random()*10)|0);
+    for(let i=0;i<n;i++){
+      const a=Math.random()*6.2832, rr=Math.random()*260;
+      bgStars.push({x:qx+Math.cos(a)*rr,y:qy+Math.sin(a)*rr*0.7,
+        z:qz+(Math.random()-.5)*900,
+        s:0.8+Math.random()*1.6,tw:Math.random()*6.28,twS:1+Math.random()*3,
+        spr:Math.random()<.3?SPR.gold:(Math.random()<.5?SPR.white:SPR.blue)});
+    }
+  }
+
+  /* Galaxias sueltas + clústeres (grupos muy juntas) */
   galas=[];
   const hues=[210,265,300,330,20,45,180,140,255];
-  const NG=mob?34:54;
+  const NG=mob?44:70;
   for(let i=0;i<NG;i++){
     const [x,y]=randXY();
     galas.push({x,y,z:-3000-Math.random()*70000,
       spr:makeGalaxySprite(hues[(Math.random()*hues.length)|0]),
-      sz:260+Math.random()*760,rot:Math.random()*6.28,
+      sz:280+Math.random()*800,rot:Math.random()*6.28,
       rotV:(0.05+Math.random()*0.12)*(Math.random()<.5?-1:1)});
   }
-  const NC=mob?3:5;
+  const NC=mob?4:7;
   for(let c=0;c<NC;c++){
     const [cx,cy]=randXY();
     const cz=-9000-Math.random()*60000;
@@ -2579,7 +2606,7 @@ function buildAll(){
 
   /* Sistemas solares en miniatura */
   systems=[];
-  const NS=mob?12:20;
+  const NS=mob?16:26;
   for(let i=0;i<NS;i++){
     const [x,y]=randXY();
     const pls=[];
@@ -2592,18 +2619,18 @@ function buildAll(){
       core:Math.random()<.4?SPR.gold:SPR.white,coreS:110+Math.random()*90});
   }
 
-  /* Nebulosas + una banda difusa tipo "vía láctea" cruzando el cielo */
+  /* Nebulosas + banda difusa tipo "vía láctea" */
   nebulas=[];
   const cols=['170,110,255','255,110,190','110,190,255','255,170,110','200,120,255','120,230,210','150,130,255','255,140,140'];
-  const NN=mob?18:28;
+  const NN=mob?22:34;
   for(let i=0;i<NN;i++){
     const [x,y]=randXY();
     nebulas.push({x,y,z:-8000-Math.random()*68000,
       spr:makeNebW(cols[(Math.random()*cols.length)|0]),
       sz:9000+Math.random()*13000,al:0.22+Math.random()*0.32});
   }
-  for(let i=0;i<(mob?10:16);i++){
-    const t=(i/(mob?10:16))*6.2832;
+  for(let i=0;i<(mob?12:20);i++){
+    const t=(i/(mob?12:20))*6.2832;
     const r=2600+Math.random()*1400;
     nebulas.push({x:Math.cos(t)*r,y:Math.sin(t)*r*0.32,
       z:-30000-Math.random()*40000,
@@ -2618,7 +2645,7 @@ function buildAll(){
     {x:-150,y:-120,R:450,spr:makePlanetSprite(450,'#c9a6ff','#5b3d9e','190,140,255'),t:STOPS[2].t,label:null}
   ];
 
-  /* Planetas decorativos: solo para el "wow" de camino, con un letrero flotante */
+  /* Planetas decorativos: solo para el "wow" de camino, con letrero flotante */
   const FLY=[
     {x:340,y:-60,R:620,c1:'#ffe1a8',c2:'#a86a2e',atmo:'255,210,150',t:26,label:'Un gigante dorado'},
     {x:-300,y:120,R:520,c1:'#a8ffe4',c2:'#2e8f7a',atmo:'150,255,225',t:54,label:'Un mundo de auroras'},
@@ -2765,6 +2792,7 @@ function drawHeart(dt, th){
     }
     camZ=camZAt(tTravel);
    const v=speedAt(Math.min(tTravel,TMAX));
+    curV=v;
 
     wCtx.globalCompositeOperation='source-over';
     wCtx.fillStyle='#030209';wCtx.fillRect(0,0,W,H);
@@ -2783,10 +2811,10 @@ function drawHeart(dt, th){
       wCtx.drawImage(n.spr,x-s/2,y-s/2,s,s);
     }
 
-    if(tTravel>47)drawAurora(th,Math.min(1,(tTravel-47)/8));
+if(tTravel>76)drawAurora(th,Math.min(1,(tTravel-76)/8));
 
     nextShoot-=dt;
-    if(nextShoot<=0&&tTravel<50){
+if(nextShoot<=0&&tTravel<80){
       const a=0.35+Math.random()*0.9;
       const sp=800+Math.random()*650;
       shoots.push({x:Math.random()*W,y:-50,
@@ -2870,10 +2898,20 @@ function drawHeart(dt, th){
 }
     }
 
-    const stretch=Math.max(26,v*0.055);
+    const stretch=Math.max(30,v*0.105);
     for(const s of bgStars){
       const d=camZ-s.z;
-      if(d<26){s.z=camZ-58000-Math.random()*7000;const [x,y]=randXY();s.x=x;s.y=y;continue;}
+      if(d<26){
+        if(s.near){ // las warp se reciclan cerca: stream constante de estrellas pasando
+          const a=Math.random()*6.2832;
+          const r=90+Math.pow(Math.random(),1.6)*520;
+          s.x=Math.cos(a)*r;s.y=Math.sin(a)*r*0.8;
+          s.z=camZ-12000-Math.random()*10000;
+        }else{
+          s.z=camZ-58000-Math.random()*7000;const [x,y]=randXY();s.x=x;s.y=y;
+        }
+        continue;
+      }
       const k1=F()/d,k2=F()/(d+stretch);
       const x1=cx0+s.x*k1,y1=cy0+s.y*k1;
       if(x1<-60||x1>W+60||y1<-60||y1>H+60)continue;
@@ -2883,7 +2921,7 @@ function drawHeart(dt, th){
       if(al<=0.015)continue;
       if(v>120){
         const g=wCtx.createLinearGradient(x1,y1,x2,y2);
-        g.addColorStop(0,'rgba(255,255,255,'+(0.75*al)+')');
+        g.addColorStop(0,'rgba(255,255,255,'+(0.8*al)+')');
         g.addColorStop(1,'rgba(255,255,255,0)');
         wCtx.strokeStyle=g;wCtx.lineWidth=Math.max(0.8,s.s*k1*2.2);
         wCtx.beginPath();wCtx.moveTo(x1,y1);wCtx.lineTo(x2,y2);wCtx.stroke();
