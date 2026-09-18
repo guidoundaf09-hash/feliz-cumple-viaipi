@@ -96,22 +96,37 @@
   @keyframes utGlow{0%,100%{text-shadow:0 0 26px rgba(255,150,190,.35),0 2px 16px rgba(0,0,0,.6)}50%{text-shadow:0 0 44px rgba(255,150,190,.7),0 2px 16px rgba(0,0,0,.6)}}
   .ut-sub{margin-top:12px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(.88rem,3.2vw,1.08rem);color:#b9b2c6;opacity:.85}
 
-  #bh-popup{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(3,2,10,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transition:opacity .5s ease}
+   /* ============ POPUP DEL AGUJERO NEGRO (la carta) ============ */
+  #bh-popup{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(3,2,10,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;transition:opacity .5s ease}
   #bh-popup.open{opacity:1}
-  .bh-card{position:relative;max-width:480px;width:100%;text-align:center;padding:clamp(34px,6vw,54px) clamp(24px,7vw,52px);border:1px solid rgba(255,179,198,.25);background:linear-gradient(180deg,rgba(20,12,30,.92),rgba(8,5,14,.96));box-shadow:0 30px 80px rgba(0,0,0,.65),inset 0 0 60px rgba(255,92,134,.1);transform:scale(.9) translateY(14px);transition:transform .55s cubic-bezier(.2,.9,.25,1.2)}
+  .bh-card{position:relative;max-width:520px;width:100%;max-height:88vh;display:flex;flex-direction:column;text-align:center;padding:clamp(26px,5vw,40px) clamp(20px,6vw,42px);border:1px solid rgba(255,179,198,.25);background:linear-gradient(180deg,rgba(20,12,30,.93),rgba(8,5,14,.97));box-shadow:0 30px 80px rgba(0,0,0,.65),inset 0 0 60px rgba(255,92,134,.08);transform:scale(.9) translateY(14px);transition:transform .55s cubic-bezier(.2,.9,.25,1.2);overflow:hidden}
   #bh-popup.open .bh-card{transform:none}
   .bh-card .c{position:absolute;width:14px;height:14px;border-color:rgba(255,179,198,.7);border-style:solid}
-  .bh-orb{width:54px;height:54px;margin:0 auto 20px;position:relative}
+  .bh-orb{width:50px;height:50px;margin:0 auto 14px;position:relative;flex:0 0 auto}
   .bh-orb::before{content:'';position:absolute;inset:0;border-radius:50%;background:#05030a;border:1px solid rgba(255,179,198,.4);animation:bhPulse 2.6s ease-in-out infinite}
-  .bh-orb::after{content:'';position:absolute;left:50%;top:50%;width:88px;height:16px;transform:translate(-50%,-50%) rotate(-18deg);border-radius:50%;border-top:2px solid rgba(255,200,140,.85);border-bottom:1px solid rgba(255,140,120,.4);animation:bhSpin 5s linear infinite}
+  .bh-orb::after{content:'';position:absolute;left:50%;top:50%;width:84px;height:15px;transform:translate(-50%,-50%) rotate(-18deg);border-radius:50%;border-top:2px solid rgba(255,200,140,.85);border-bottom:1px solid rgba(255,140,120,.4);animation:bhSpin 5s linear infinite}
   @keyframes bhPulse{0%,100%{box-shadow:0 0 20px rgba(255,92,134,.4)}50%{box-shadow:0 0 42px rgba(255,92,134,.85)}}
   @keyframes bhSpin{to{transform:translate(-50%,-50%) rotate(342deg)}}
-  .bh-over{font-size:.66rem;letter-spacing:.5em;padding-left:.5em;text-transform:uppercase;color:#ffb3c6}
-  .bh-card h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:clamp(1.55rem,5.8vw,2.3rem);color:#fff;margin-top:12px}
-  .bh-card p{margin-top:14px;font-weight:300;font-size:clamp(.88rem,3.2vw,1.02rem);line-height:1.75;color:#cfc8da}
-  .bh-card p em{color:#ffd9e6}
-  .bh-close{margin-top:26px;padding:12px 30px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,179,198,.45);border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:background .3s,box-shadow .3s}
-  .bh-close:hover{background:rgba(255,179,198,.14);box-shadow:0 0 24px rgba(255,92,134,.35)}
+  .bh-over{font-size:.62rem;letter-spacing:.38em;padding-left:.38em;text-transform:uppercase;color:#ffb3c6;flex:0 0 auto}
+  .bh-card h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:clamp(1.5rem,5.4vw,2.15rem);color:#fff;margin-top:10px;flex:0 0 auto}
+  .bh-letter{margin-top:14px;overflow-y:auto;text-align:left;font-weight:300;font-size:clamp(.86rem,3vw,.98rem);line-height:1.9;color:#d8d2e2;white-space:pre-line;padding-right:12px;flex:1 1 auto;min-height:110px;max-height:52vh;scrollbar-width:thin;scrollbar-color:rgba(255,179,198,.35) transparent}
+  .bh-letter::-webkit-scrollbar{width:5px}
+  .bh-letter::-webkit-scrollbar-thumb{background:rgba(255,179,198,.3);border-radius:99px}
+  .bh-letter::-webkit-scrollbar-track{background:transparent}
+  .bh-cursor{display:inline-block;width:2px;height:1em;background:#ffb3c6;vertical-align:-.12em;margin-left:1px;box-shadow:0 0 8px rgba(255,92,134,.8);animation:bhBlink 1s steps(1) infinite}
+  @keyframes bhBlink{50%{opacity:0}}
+  .bh-hint{margin-top:10px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.86rem;color:#8f8798;flex:0 0 auto;transition:opacity .5s ease}
+  .bh-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;flex:0 0 auto;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .8s ease,transform .8s ease}
+  .bh-actions.show{opacity:1;transform:none;pointer-events:auto}
+  .bh-btn{font-family:'Jost',sans-serif;font-size:.8rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:11px 22px;border-radius:999px;cursor:pointer;transition:background .3s,box-shadow .3s}
+  .bh-btn.ghost{color:#ffd9e6;background:transparent;border:1px solid rgba(255,179,198,.4)}
+  .bh-btn.ghost:hover{background:rgba(255,179,198,.1);box-shadow:0 0 18px rgba(255,92,134,.25)}
+  .bh-btn.solid{color:#1c0d18;background:linear-gradient(180deg,#ffd9e6,#ffb3c6);border:1px solid rgba(255,255,255,.35);box-shadow:0 4px 20px rgba(255,92,134,.3)}
+  .bh-btn.solid:hover{box-shadow:0 6px 28px rgba(255,92,134,.55)}
+  .bh-spark{position:fixed;width:3px;height:3px;border-radius:50%;pointer-events:none;z-index:60;background:#ffd9a8;box-shadow:0 0 6px #ff9ec4;animation:bhSpark .55s ease-out forwards}
+  @keyframes bhSpark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
+  .bh-toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(14px);z-index:70;padding:11px 22px;border-radius:999px;background:rgba(14,9,22,.9);border:1px solid rgba(255,179,198,.35);color:#ffd9e6;font-size:.85rem;letter-spacing:.05em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .45s ease,transform .45s ease;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .bh-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -175,12 +190,18 @@
     <div class="bh-card">
       <i class="c c1"></i><i class="c c2"></i><i class="c c3"></i><i class="c c4"></i>
       <div class="bh-orb"></div>
-      <div class="bh-over">TON 618 &middot; el coraz&oacute;n del universo</div>
-      <h2>Encontraste el centro de todo</h2>
-      <p>Dicen que lo que entra a un agujero negro viaja a otro universo&hellip; el m&iacute;o empez&oacute; el d&iacute;a en que t&uacute; naciste. <em>Felices 21 a&ntilde;os, Zharick</em>: que esta vuelta al sol traiga m&aacute;s luz que todas estas estrellas juntas.</p>
-      <button class="bh-close" id="bhClose">Volver a navegar</button>
+      <div class="bh-over">Recuerda que para m&iacute; eres especial</div>
+      <h2>Para ti</h2>
+      <div class="bh-letter" id="bhLetter"></div>
+      <div class="bh-hint" id="bhHint">toca la carta si quieres leerla completa de una vez</div>
+      <div class="bh-actions" id="bhActions">
+        <button class="bh-btn ghost" id="bhMemories">Mis recuerdos</button>
+        <button class="bh-btn solid" id="bhNavigate">Navegar aqu&iacute;</button>
+      </div>
     </div>
   </div>
+
+  <div class="bh-toast" id="bh-toast">&#10022; Mis recuerdos est&aacute;n en construcci&oacute;n &mdash; muy pronto &#10022;</div>
 
 
 
@@ -1893,22 +1914,115 @@ function goUniverse(){
   },420);
 }
 
-/* ==================== POPUP DEL AGUJERO NEGRO ==================== */
+/* ==================== POPUP DEL AGUJERO NEGRO (la carta) ==================== */
 const bhPopup=document.getElementById('bh-popup');
-let bhOpen=false;
+const bhLetter=document.getElementById('bhLetter');
+const bhHint=document.getElementById('bhHint');
+const bhActions=document.getElementById('bhActions');
+let bhOpen=false,bhTimer=null,bhDone=false,bhPos=0,bhNode=null,bhCursor=null,bhHintTimer=null;
+
+/* LA CARTA — cada string es un párrafo. Edita el texto aquí si quieres. */
+const CARTA=[
+  "Hola, Abiguito.",
+  "Sé que las cosas entre nosotros han estado un poco raras y que quizás sigues enojada conmigo. Lo siento de verdad. Jamás me olvidaría de tu cumpleaños, te lo juro. Si me he alejado o si a veces siento que te fallo, no es porque no me importes, sino porque entre el trabajo y la universidad a veces el día no me da para más y termino molido. Pero ni el cansancio hace que me olvide de ti.",
+  "Hoy cumples 21 años, estás en la U dándolo todo y construyendo tu futuro. Quería darte algo diferente, algo que hablara por mí cuando a mí me cuesta encontrar las palabras indicadas. Por eso me quedé despierto toda la madrugada armando esto para ti. Aunque no lo creas, fue un dolor de cabeza hacerlo funcionar jajaja, pero valía totalmente la pena si lograba sacarte una sonrisa.",
+  "Si le das clic al agujero negro, vas a ver cómo todo alrededor parece desaparecer y se concentra en un solo punto. Así me pasa contigo: en medio de todo el lío de mi rutina, del estrés y de lo torpe que soy para demostrar lo que siento, tú sigues siendo ese punto fijo y especial en mi vida.",
+  "Eres una chica superinteligente, hermosa y con una energía increíble para lograr lo que sea. Sí, también eres superbonita, sentimental y recontra enojona jajaja, pero aun con todo eso, te quiero un montón. Sé que me cuesta demostrar el cariño de la forma en que tú esperas o a la que estás acostumbrada. Reconozco mis fallas en eso, y entiendo si sientes que necesitas tu espacio o sentirte más libre; yo jamás voy a ser una carga para ti. Solo quiero que nunca dudes de que puedes contar conmigo para lo que sea, siempre voy a estar aquí para apoyarte.",
+  "Si algún día te sientes mal, abrumada o te gana la duda, entra de nuevo a este pequeño universo que te hice. Mira a tu alrededor y acuérdate de que entre tanta gente, planetas y estrellas, tú eres única y completamente especial.",
+  "Felices 21 años, Zharik. Que este nuevo año de vida te traiga todo lo bonito que te mereces.",
+  "Te quiero mucho,",
+  "Guido U"
+].join("\n\n");
+
+function bhSparkAt(x,y){
+  const n=Math.random()<.35?2:1;
+  for(let i=0;i<n;i++){
+    const s=document.createElement('i');
+    s.className='bh-spark';
+    s.style.left=(x+(Math.random()-.5)*7)+'px';
+    s.style.top=(y+(Math.random()-.5)*7)+'px';
+    const a=Math.random()*6.2832,r=9+Math.random()*17;
+    s.style.setProperty('--dx',(Math.cos(a)*r).toFixed(1)+'px');
+    s.style.setProperty('--dy',(Math.sin(a)*r-7).toFixed(1)+'px');
+    if(Math.random()<.3) s.style.background='#fff';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),620);
+  }
+}
+
+function bhWrite(){
+  if(!bhOpen||bhDone) return;
+  if(bhPos>=CARTA.length){ bhFinish(); return; }
+  const ch=CARTA[bhPos++];
+  bhNode.data+=ch;
+  if(ch!==' '&&ch!=='\n'&&Math.random()<.45){   // chispita en la letra recién escrita
+    try{
+      const r=document.createRange();
+      r.setStart(bhNode,bhNode.length-1);
+      r.setEnd(bhNode,bhNode.length);
+      const q=r.getBoundingClientRect();
+      if(q.width>0) bhSparkAt(q.right,q.top+q.height*.5);
+    }catch(e){}
+  }
+  const nearBottom=bhLetter.scrollHeight-bhLetter.scrollTop-bhLetter.clientHeight<70;
+  if(nearBottom) bhLetter.scrollTop=bhLetter.scrollHeight;
+  let d=7+Math.random()*11;                        // ritmo base de escritura
+  if(',;:'.includes(ch)) d=95+Math.random()*60;    // coma → pequeña pausa
+  else if('.!?'.includes(ch)) d=230+Math.random()*140; // punto → respiro
+  else if(ch==='\n') d=330;                        // salto de párrafo
+  bhTimer=setTimeout(bhWrite,d);
+}
+
+function bhFinish(){
+  bhDone=true;
+  clearTimeout(bhTimer);
+  bhNode.data=CARTA;
+  bhCursor.style.display='none';
+  bhHint.style.opacity='0';
+  setTimeout(()=>{ bhHint.style.display='none'; },520);
+  bhLetter.scrollTop=bhLetter.scrollHeight;
+  bhActions.classList.add('show');
+}
+
+function bhStart(){
+  clearTimeout(bhTimer); clearTimeout(bhHintTimer);
+  bhPos=0; bhDone=false;
+  bhLetter.innerHTML='';
+  bhLetter.scrollTop=0;
+  bhNode=document.createTextNode('');
+  bhCursor=document.createElement('span');
+  bhCursor.className='bh-cursor';
+  bhLetter.appendChild(bhNode);
+  bhLetter.appendChild(bhCursor);
+  bhHint.style.display='';
+  bhHint.style.opacity='0';
+  bhActions.classList.remove('show');
+  bhHintTimer=setTimeout(()=>{ if(!bhDone&&bhOpen) bhHint.style.opacity=''; },6000);
+  bhWrite();
+}
+
 function openBH(){
   if(bhOpen) return; bhOpen=true;
   MusicCosmos.chime();
   bhPopup.style.display='flex';
   requestAnimationFrame(()=>requestAnimationFrame(()=>bhPopup.classList.add('open')));
+  bhStart();
 }
 function closeBH(){
   if(!bhOpen) return; bhOpen=false;
+  clearTimeout(bhTimer); clearTimeout(bhHintTimer);
   bhPopup.classList.remove('open');
-  setTimeout(()=>{ bhPopup.style.display='none'; },520);
+  setTimeout(()=>{ bhPopup.style.display='none'; bhLetter.innerHTML=''; },520);
 }
-document.getElementById('bhClose').addEventListener('click',closeBH);
+document.getElementById('bhNavigate').addEventListener('click',closeBH);
+document.getElementById('bhMemories').addEventListener('click',()=>{
+  const t=document.getElementById('bh-toast');
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h=setTimeout(()=>t.classList.remove('show'),2800);
+});
 bhPopup.addEventListener('click',e=>{ if(e.target===bhPopup) closeBH(); });
+bhLetter.addEventListener('click',()=>{ if(!bhDone) bhFinish(); });
 
 /* ==================== CONTROLES DE NAVEGACIÓN ==================== */
 let uDrag=false,uLX=0,uLY=0,uMoved=0,uDownT=0;
