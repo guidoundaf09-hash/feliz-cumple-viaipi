@@ -2899,11 +2899,14 @@ if(nextShoot<=0&&tTravel<80){
           const ps=p.sz*k*3;
           wCtx.drawImage(p.spr,px-ps/2,py-ps/2,ps,ps);
         }
-      }else{
+           }else{
   const p=it.o;
-  const s=p.spr.width*k;
+  const rawS=p.spr.width*k;
+  const PMAX=Math.max(W,H)*1.7;                 // el planeta ya no puede tapar toda la pantalla
+  const s=Math.min(rawS,PMAX);
+  const closeFade=rawS>PMAX ? Math.max(0,1-(rawS-PMAX)/(PMAX*1.1)) : 1; // se atenúa al acercarse demasiado, en vez de quedar blanco fijo
   const x=cx0+p.x*k,y=cy0+p.y*k;
-  wCtx.globalAlpha=Math.min(1,(it.d-40)/300);
+  wCtx.globalAlpha=Math.min(1,(it.d-40)/300)*closeFade;
   wCtx.drawImage(p.spr,x-s/2,y-s/2,s,s);
   if(p.label){
     const near=Math.max(0,1-Math.abs(it.d-900)/900);
