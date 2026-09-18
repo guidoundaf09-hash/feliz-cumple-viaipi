@@ -2859,21 +2859,22 @@ if(nextShoot<=0&&tTravel<80){
       wCtx.beginPath();wCtx.moveTo(s.x,s.y);wCtx.lineTo(lx,ly);wCtx.stroke();
     }
 
-    const items=[];
+    itN=0;
     for(const g of galas){
       const d=camZ-g.z;
       if(d<60){g.z=camZ-62000-Math.random()*6000;const [x,y]=randXY();g.x=x;g.y=y;continue;}
-      if(d<56000)
+      if(d<56000)push(d,g,0);
     }
     for(const s of systems){
       const d=camZ-s.z;
       if(d<60){s.z=camZ-60000-Math.random()*6000;const [x,y]=randXY();s.x=x;s.y=y;continue;}
-      if(d<56000)
+      if(d<56000)push(d,s,1);
     }
     for(const p of planets){
       const d=camZ-p.z;
-      if(d>40)
+      if(d>40)push(d,p,2);
     }
+    items.length=itN;
     items.sort((a,b)=>b.d-a.d);
     for(const it of items){
       const k=F()/it.d;
@@ -2970,23 +2971,7 @@ if(nextShoot<=0&&tTravel<80){
     wCanvas.style.display='block';
     requestAnimationFrame(()=>requestAnimationFrame(()=>{wCanvas.style.opacity='1';}));
     raf=requestAnimationFrame(frame);
-        itN=0;
-    for(const g of galas){
-      const d=camZ-g.z;
-      if(d<60){g.z=camZ-62000-Math.random()*6000;const [x,y]=randXY();g.x=x;g.y=y;continue;}
-      if(d<56000)push(d,g,0);
-    }
-    for(const s of systems){
-      const d=camZ-s.z;
-      if(d<60){s.z=camZ-60000-Math.random()*6000;const [x,y]=randXY();s.x=x;s.y=y;continue;}
-      if(d<56000)push(d,s,1);
-    }
-    for(const p of planets){
-      const d=camZ-p.z;
-      if(d>40)push(d,p,2);
-    }
-    items.length=itN;
-    items.sort((a,b)=>b.d-a.d);
+       
   }
   return {start};
 })();
