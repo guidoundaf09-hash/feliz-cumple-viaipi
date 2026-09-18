@@ -1128,124 +1128,101 @@ const Heart = (() => {
   return { start, relayout };
 })();
 
+
 /* ==================================================================
-   FASE 4: EL TÚNEL DE CAÍDA
-   Estás cayendo en el centro; anillos con frases giran a tu alrededor
-   como elipses. Línea de tiempo:
-     0-4s    aceleras suavemente
-     12-18s  pico de velocidad (clímax)
-     26-31s  frenas al llegar al fondo
-     ~31.5s  llegas: luz que crece + acorde final
-     ~34.5s  aparece "CONTINUARÁ…"
+   FASE 4: EL TÚNEL DE CAÍDA (hélice 3D)
+   Cada letra vive sobre la pared del túnel con un ángulo y una
+   profundidad, formando una espiral. Tú caes por el centro.
    ================================================================== */
 const Fall = (() => {
+  /* ---- Calibración rápida ---- */
+  const R      = 520;   // radio del túnel: más bajo = más íntimo
+  const PITCH  = 1000;  // cuánto baja la hélice por vuelta completa
+  const FONT_W = 92;    // tamaño de las letras
+  const FAR    = 3200;  // hasta dónde se ve el túnel
+
+  /* ---- Línea de tiempo de la caída (segundos) ---- */
   const TL = { accel:4, peakIn:12, peakOut:18, brakeIn:26, arrive:31.5, finalAt:34.6 };
   const VMAX = 150, PEAK = 205;
-  const RING_WORLD = 560, GAP = 430, FAR = 4600;
-
-  let running = false, raf = null, t0 = 0, lastT = 0;
-  let camZ = 0, nextRingZ = 0, phraseIdx = 0;
-  let rings = [], dust = [];
-  let arrived = false, finalShown = false, glow = 0;
-
-  const smooth = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
-
+  const smooth = x => { x = Math.min(1, Math.max(0, x)); return x*x*(3-2*x); };
   function speedAt(t){
-    if (t < TL.accel)      return VMAX * smooth(t / TL.accel);
-    if (t < TL.peakIn)     return VMAX + (PEAK - VMAX) * smooth((t - TL.accel) / (TL.peakIn - TL.accel));
-    if (t < TL.peakOut)    return PEAK;
-    if (t < TL.brakeIn)    return PEAK - (PEAK - VMAX) * smooth((t - TL.peakOut) / (TL.brakeIn - TL.peakOut));
-    if (t < TL.arrive)     return VMAX * (1 - smooth((t - TL.brakeIn) / (TL.arrive - TL.brakeIn)));
+    if (t < TL.accel)   return VMAX * smooth(t / TL.accel);
+    if (t < TL.peakIn)  return VMAX + (PEAK - VMAX) * smooth((t - TL.accel) / (TL.peakIn - TL.accel));
+    if (t < TL.peakOut) return PEAK;
+    if (t < TL.brakeIn) return PEAK - (PEAK - VMAX) * smooth((t - TL.peakOut) / (TL.brakeIn - TL.peakOut));
+    if (t < TL.arrive)  return VMAX * (1 - smooth((t - TL.brakeIn) / (TL.arrive - TL.brakeIn)));
     return 0;
   }
 
-  /* Sprite: frase curvada alrededor de un círculo, con aros decorativos */
+  const LET_COLORS = [
+    { fill:'#ffffff', glow:'rgba(255,120,160,.95)' },
+    { fill:'#ffe9f0', glow:'rgba(255,190,130,.95)' },
+    { fill:'#eaf1ff', glow:'rgba(150,190,255,.95)' },
+    { fill:'#fff3e6', glow:'rgba(255,150,180,.95)' }
+  ];
+
+  /* ---- Medición y sprites de letras (pre-render con glow, rapidísimo) ---- */
+  const measCtx = document.createElement('canvas').getContext('2d');
+  const MEAS_FONT = '500 100px Jost, "Segoe UI", Arial, sans-serif';
+  measCtx.font = MEAS_FONT;
+  const measW = {};
+  const charW = ch => {
+    if (!(ch in measW)) measW[ch] = Math.max(18, measCtx.measureText(ch).width);
+    return measW[ch];
+  };
+
   const spriteCache = {};
-  function makeRingSprite(text, big, variant){
-    const key = text + '|' + big + '|' + variant;
+  function letterSprite(ch, ci){
+    const key = ch + '|' + ci;
     if (spriteCache[key]) return spriteCache[key];
-
-    const S = 700, R = big ? 262 : 246;
-    const cv = document.createElement('canvas'); cv.width = cv.height = S;
+    const pad = 40;
+    const w = Math.ceil(charW(ch)) + pad * 2;
+    const h = 100 + pad * 2;
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
     const c = cv.getContext('2d');
-
-    const glows = ['255,110,150', '255,190,130', '170,200,255'];
-    const glow = glows[variant % 3];
-
-    let fs = big ? 66 : 54;
-    const font = fz => `500 ${fz}px Jost, 'Segoe UI', Arial, sans-serif`;
-    c.font = font(fs);
-    let tw = c.measureText(text).width;
-    const maxArc = 2 * Math.PI * R * (big ? 0.5 : 0.56);
-    if (tw > maxArc && tw > 0){
-      fs = Math.max(26, Math.floor(fs * maxArc / tw));
-      c.font = font(fs);
-      tw = c.measureText(text).width;
-    }
-
-    const sep = '   ✦   ';
-    const track = 2;
-    const sepW = c.measureText(sep).width + track * sep.length;
-    const unitW = tw + track * text.length + sepW;
-    const reps = Math.max(1, Math.round(2 * Math.PI * R * 0.98 / unitW));
-
-    c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.shadowColor = `rgba(${glow},.95)`;
-    c.shadowBlur = 20;
-
-    const totalW = unitW * reps;
-    const angPerPx = 2 * Math.PI / totalW;
-    let th = -Math.PI / 2;
-    for (let r = 0; r < reps; r++){
-      const seq = text + sep;
-      for (const ch of seq){
-        const chW = c.measureText(ch).width;
-        th += (chW / 2) * angPerPx;
-        if (ch !== ' '){
-          c.fillStyle = (ch === '✦' || ch === '♥') ? '#ffd9a8' : '#ffffff';
-          c.save();
-          c.translate(S/2 + Math.cos(th) * R, S/2 + Math.sin(th) * R);
-          c.rotate(th + Math.PI / 2);
-          c.fillText(ch, 0, 0);
-          c.restore();
-        }
-        th += (chW / 2 + track) * angPerPx;
-      }
-    }
-
-    // Aros decorativos
+    c.font = MEAS_FONT; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const col = LET_COLORS[ci % LET_COLORS.length];
+    c.shadowColor = col.glow; c.shadowBlur = 26;
+    c.fillStyle = col.fill;
+    c.fillText(ch, w/2, h/2 + 4);
     c.shadowBlur = 0;
-    c.strokeStyle = `rgba(${glow},.30)`; c.lineWidth = 1.6;
-    c.beginPath(); c.arc(S/2, S/2, R + 54, 0, 7); c.stroke();
-    c.setLineDash([2, 13]);
-    c.strokeStyle = 'rgba(255,255,255,.16)';
-    c.beginPath(); c.arc(S/2, S/2, R - 44, 0, 7); c.stroke();
-    c.setLineDash([]);
-
+    c.fillText(ch, w/2, h/2 + 4); // núcleo nítido encima del glow
     spriteCache[key] = cv;
     return cv;
   }
 
-  function spawnRing(z){
+  /* ---- Estado ---- */
+  let running = false, raf = null, t0 = 0, lastT = 0;
+  let camZ = 0, tubeR = R;              // la cámara cae hacia -Z
+  let letters = [], aros = [], dust = [];
+  let nextZ = -900, nextAroZ = -400, spiralA = -Math.PI / 2, phraseIdx = 0;
+  let spin = 0, spinV = 0.15;
+  let arrived = false, finalShown = false, glow = 0;
+
+  function spawnPhrase(zStart){
+    const lista = AJUSTES.frasesTunel;
+    const txt = lista[phraseIdx % lista.length].toUpperCase();
     const big = (phraseIdx === 0);
-    const spr = makeRingSprite(AJUSTES.frasesTunel[phraseIdx % AJUSTES.frasesTunel.length], big, phraseIdx % 3);
-    rings.push({
-      z,
-      rot: Math.random() * Math.PI * 2,
-      rotV: (0.13 + Math.random() * 0.3) * (Math.random() < 0.5 ? -1 : 1),
-      elK: big ? 0.84 : (0.6 + Math.random() * 0.33),   // elipticidad
-      elRot: (Math.random() - 0.5) * 0.9,
-      spr
-    });
+    const fs = big ? FONT_W * 1.4 : FONT_W;   // la primera frase más grande
+    const ci = phraseIdx % LET_COLORS.length;
+    let a = spiralA, z = zStart;
+    for (const ch of txt){
+      const w = charW(ch) * (fs / 100) + fs * 0.22;     // ancho + tracking
+      if (ch !== ' ') letters.push({ ch, a, z, fs, ci });
+      a += w / tubeR;                                   // avanza alrededor del tubo
+      z -= w * PITCH / (2 * Math.PI * tubeR);           // y hacia el fondo (hélice)
+    }
+    spiralA = a + 0.7;                                  // la espiral continúa
     phraseIdx++;
+    return z - fs * 2.2;                                // respiro entre frases
   }
 
   function initDust(){
     dust = [];
-    for (let i = 0; i < 230; i++){
+    for (let i = 0; i < 210; i++){
       dust.push({
         a: Math.random() * Math.PI * 2,
-        r: 70 + Math.random() * 640,
+        r: tubeR * (0.35 + Math.random() * 0.75),
         z: -Math.random() * FAR,
         pink: Math.random() < 0.3
       });
@@ -1261,34 +1238,37 @@ const Fall = (() => {
     const v = speedAt(t);
     camZ -= v * dt;
 
-    if (!arrived && t >= TL.arrive){
-      arrived = true;
-      MusicPassion.finale();
-    }
+    if (!arrived && t >= TL.arrive){ arrived = true; MusicPassion.finale(); }
     if (arrived) glow = Math.min(1, (t - TL.arrive) / 2.4);
     if (!finalShown && t >= TL.finalAt){
       finalShown = true;
       document.getElementById('fall-final').classList.add('visible');
     }
 
-    // Mantener anillos por delante
-    while (nextRingZ > camZ - FAR){
-      spawnRing(nextRingZ);
-      nextRingZ -= GAP + (Math.random() - 0.5) * 120;
-    }
-    rings = rings.filter(r => (r.z - camZ) > 46);
+    /* Generar túnel por delante de la cámara */
+    while (nextZ > camZ - FAR) nextZ = spawnPhrase(nextZ);
+    while (nextAroZ > camZ - FAR){ aros.push({ z: nextAroZ }); nextAroZ -= PITCH / 2; }
 
-    // Cámara con balanceo (sensación de caída)
+    /* Limpiar lo que ya pasó */
+    letters = letters.filter(l => (camZ - l.z) > 30);
+    aros    = aros.filter(r => (camZ - r.z) > 30);
+
+    /* Giro global del tubo */
+    const spinTarget = arrived ? 0.05 : (0.16 + v * 0.0016);
+    spinV += (spinTarget - spinV) * Math.min(1, dt * 1.1);
+    spin += spinV * dt;
+
+    /* Cámara con balanceo */
     const swayK = Math.min(1, v / 140) * 0.8;
-    const camX = W/2 + Math.sin(t * 0.55) * 0.05 * W * swayK;
-    const camY = H/2 + Math.cos(t * 0.42) * 0.04 * H * swayK;
+    const camX = W / 2 + Math.sin(t * 0.55) * 0.05 * W * swayK;
+    const camY = H / 2 + Math.cos(t * 0.42) * 0.04 * H * swayK;
     const FOV = H * 1.05;
 
-    // Fondo
+    /* Fondo */
     fCtx.fillStyle = '#05030b';
     fCtx.fillRect(0, 0, W, H);
 
-    // Resplandor central pulsante (al ritmo del latido de la música)
+    /* Resplandor central que late (al ritmo del corazón de la música) */
     const bp = Math.pow(Math.max(0, Math.sin(Math.PI * ((t % 1.55) / 1.55))), 3);
     const bgR = Math.min(W, H) * (0.34 + 0.16 * bp);
     const bg = fCtx.createRadialGradient(camX, camY, 0, camX, camY, bgR);
@@ -1297,56 +1277,69 @@ const Fall = (() => {
     fCtx.fillStyle = bg;
     fCtx.fillRect(0, 0, W, H);
 
-    // Polvo estelar (líneas de velocidad)
-    const drift = arrived ? 20 : 0;
+    /* Aros guía punteados (lejanos primero) */
+    aros.sort((a, b) => (camZ - b.z) - (camZ - a.z));
+    for (const r of aros){
+      const depth = camZ - r.z;
+      const k = FOV / depth;
+      let al = Math.min(1, (FAR - depth) / 900) * Math.min(1, (depth - 30) / 260);
+      if (al <= 0) continue;
+      al *= 0.30 + 0.25 * Math.min(1, k);
+      fCtx.strokeStyle = `rgba(255,190,205,${al})`;
+      fCtx.lineWidth = Math.max(1, 1.6 * k);
+      fCtx.setLineDash([4 + 6 * k, 16 + 26 * k]);
+      fCtx.beginPath();
+      fCtx.arc(camX, camY, tubeR * k, 0, 6.2832);
+      fCtx.stroke();
+    }
+    fCtx.setLineDash([]);
+
+    /* Polvo estelar: FIJO en el mundo → ahora sí pasa volando de verdad */
     fCtx.lineCap = 'round';
     for (const d of dust){
-      d.z -= (v + drift) * dt;
-      const depth = d.z - camZ;
-      if (depth <= 40){ d.z = camZ - FAR + Math.random() * 400; continue; }
-      const sc = FOV / depth;
-      const x1 = camX + Math.cos(d.a) * d.r * sc;
-      const y1 = camY + Math.sin(d.a) * d.r * sc;
-      const d2 = depth + Math.max(24, v * 0.055);
-      const sc2 = FOV / d2;
-      const x2 = camX + Math.cos(d.a) * d.r * sc2;
-      const y2 = camY + Math.sin(d.a) * d.r * sc2;
-      const near = Math.min(1, (FAR - depth) / 2600);
-      const fadeN = Math.min(1, (depth - 40) / 220);
-      const alpha = (0.10 + 0.34 * near) * fadeN;
-      fCtx.strokeStyle = d.pink ? `rgba(255,170,200,${alpha})` : `rgba(235,238,255,${alpha})`;
+      d.a += dt * 0.03;
+      const depth = camZ - d.z;
+      if (depth < 26){ d.z = camZ - FAR - Math.random() * 500; continue; }
+      const k1 = FOV / depth;
+      const k2 = FOV / (depth + Math.max(34, v * 0.07)); // estela hacia el centro
+      const ang = d.a + spin * 0.35;
+      const x1 = camX + Math.cos(ang) * d.r * k1;
+      const y1 = camY + Math.sin(ang) * d.r * k1;
+      const x2 = camX + Math.cos(ang) * d.r * k2;
+      const y2 = camY + Math.sin(ang) * d.r * k2;
+      const near = Math.min(1, (FAR - depth) / 2400);
+      const fadeN = Math.min(1, (depth - 26) / 200);
+      const al = (0.10 + 0.34 * near) * fadeN;
+      if (al <= 0.01) continue;
+      fCtx.strokeStyle = d.pink ? `rgba(255,170,200,${al})` : `rgba(235,238,255,${al})`;
       fCtx.lineWidth = 1.4;
       fCtx.beginPath(); fCtx.moveTo(x1, y1); fCtx.lineTo(x2, y2); fCtx.stroke();
     }
 
-    // Anillos: lejanos primero
-    rings.sort((a, b) => (b.z - camZ) - (a.z - camZ));
-    const slowK = arrived ? 0.35 : 1;
-    for (const r of rings){
-      r.rot += r.rotV * dt * slowK;
-      const depth = r.z - camZ;
-      const sc = FOV / depth;
-      const size = RING_WORLD * sc;
-      const f1 = Math.min(1, (FAR - depth) / 1200);
-      const f2 = Math.min(1, (depth - 46) / 160);
-      const boost = 0.75 + 0.5 * Math.max(0, 1 - (depth - 80) / 700);
-      let alpha = f1 * f2 * boost * 0.9;
-      if (alpha > 1) alpha = 1;
-      alpha *= (1 + glow * 0.4);
-      if (alpha > 1) alpha = 1;
-
+    /* Letras sobre la pared del túnel (lejanas primero, cercanas encima) */
+    letters.sort((a, b) => (camZ - b.z) - (camZ - a.z));
+    for (const l of letters){
+      const depth = camZ - l.z;
+      const k = FOV / depth;
+      const ang = l.a + spin;
+      const x = camX + Math.cos(ang) * tubeR * k;
+      const y = camY + Math.sin(ang) * tubeR * k;
+      let al = Math.min(1, (FAR - depth) / 650) * Math.min(1, (depth - 40) / 300);
+      if (al <= 0.01) continue;
+      al = Math.min(1, al * (0.92 + 0.08 * Math.sin(t * 2.2 + l.a * 3 + l.z * 0.01)));
+      const spr = letterSprite(l.ch, l.ci);
+      const dw = spr.width * (l.fs / 100) * k;
+      const dh = spr.height * (l.fs / 100) * k;
       fCtx.save();
-      fCtx.translate(camX, camY);
-      fCtx.rotate(r.elRot);
-      fCtx.scale(1, r.elK);          // ← la elipse
-      fCtx.rotate(r.rot);            // ← el texto girando dentro
-      fCtx.globalAlpha = alpha;
-      fCtx.drawImage(r.spr, -size/2, -size/2, size, size);
+      fCtx.translate(x, y);
+      fCtx.rotate(ang + Math.PI / 2);   // la letra "de pie" sobre la pared
+      fCtx.globalAlpha = al;
+      fCtx.drawImage(spr, -dw / 2, -dh / 2, dw, dh);
       fCtx.restore();
     }
     fCtx.globalAlpha = 1;
 
-    // Luz del fondo al llegar
+    /* Luz del fondo al llegar */
     if (glow > 0){
       const gr = glow * glow * 1.35 * Math.max(W, H);
       const g = fCtx.createRadialGradient(camX, camY, 0, camX, camY, gr);
@@ -1360,8 +1353,11 @@ const Fall = (() => {
 
   function start(){
     running = true; t0 = performance.now(); lastT = t0;
-    camZ = 0; nextRingZ = -700; phraseIdx = 0;
-    rings = []; arrived = false; finalShown = false; glow = 0;
+    camZ = 0; nextZ = -900; nextAroZ = -400;
+    spiralA = -Math.PI / 2; phraseIdx = 0;
+    letters = []; aros = []; spin = 0; spinV = 0.15;
+    arrived = false; finalShown = false; glow = 0;
+    tubeR = Math.min(R, Math.max(360, W * 1.2)); // en pantallas angostas el tubo se adapta
     initDust();
     fCanvas.style.display = 'block';
     document.getElementById('fall-final').style.display = 'flex';
@@ -1370,6 +1366,8 @@ const Fall = (() => {
   }
   return { start };
 })();
+
+  
 
 /* ==================== ORQUESTADOR DE FASES ==================== */
 function goFall(){
