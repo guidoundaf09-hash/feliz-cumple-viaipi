@@ -1526,25 +1526,48 @@ const Universe = (() => {
     c.fillStyle=g; c.fillRect(0,0,256,256);
     return s;
   }
-    function makeClusterSprite(colors){
-    const S=320, cv=document.createElement('canvas'); cv.width=cv.height=S;
-    const c=cv.getContext('2d'), cx=S/2, cy=S/2;
+      function makeClusterSprite(colors){
+    const Wc=560, Hc=190;
+    const cv=document.createElement('canvas'); cv.width=Wc; cv.height=Hc;
+    const c=cv.getContext('2d');
+    const img=c.createImageData(Wc,Hc); const d=img.data;
+    const c1=colors[0].split(',').map(Number), c2=colors[1].split(',').map(Number);
+    const midY=Hc*0.52, amp=Hc*0.10;
+    for(let y=0;y<Hc;y++){
+      for(let x=0;x<Wc;x++){
+        const nx=x/Wc;
+        const taper=Math.sin(Math.PI*nx);
+        if(taper<=0.002) continue;
+        const cy=midY+Math.sin(nx*6.0+1.3)*amp*0.6+Math.sin(nx*2.1)*amp*0.8;
+        const width=14+34*taper;
+        const dy=(y-cy)/width;
+        let dens=Math.exp(-dy*dy*1.4)*taper;
+        const dust=Math.max(0,Math.sin(nx*23.0+dy*2.0)*0.5+0.5);
+        dens*=1-0.6*Math.pow(dust,3)*taper;
+        const speck=Math.random()<0.018*taper?0.7:0;
+        const a=Math.min(1,dens*0.85+speck);
+        if(a<=0.004) continue;
+        const mixT=0.5+0.5*Math.sin(nx*4.5+dy);
+        const r=c1[0]+(c2[0]-c1[0])*mixT, g=c1[1]+(c2[1]-c1[1])*mixT, b=c1[2]+(c2[2]-c1[2])*mixT;
+        const i=(y*Wc+x)*4;
+        d[i]=r; d[i+1]=g; d[i+2]=b; d[i+3]=Math.min(255,a*255)|0;
+      }
+    }
+    c.putImageData(img,0,0);
     c.globalCompositeOperation='screen';
-    let g=c.createRadialGradient(cx,cy,0,cx,cy,S/2);
-    g.addColorStop(0,'rgba('+colors[0]+',0.35)');
-    g.addColorStop(0.5,'rgba('+colors[1]+',0.14)');
-    g.addColorStop(1,'rgba('+colors[1]+',0)');
-    c.fillStyle=g; c.beginPath(); c.arc(cx,cy,S/2,0,7); c.fill();
-    const n=40+((Math.random()*30)|0);
-    for(let i=0;i<n;i++){
-      const a=Math.random()*6.2832, rr=Math.pow(Math.random(),0.6)*S*0.42;
-      const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*0.72;
-      const rad=1.2+Math.random()*3.2;
-      const col=Math.random()<0.5?colors[0]:colors[1];
-      const gg=c.createRadialGradient(x,y,0,x,y,rad*3.4);
-      gg.addColorStop(0,'rgba('+col+',0.9)');
+    for(let i=0;i<90;i++){
+      const nx=Math.random();
+      const taper=Math.sin(Math.PI*nx);
+      if(Math.random()>taper) continue;
+      const cy=midY+Math.sin(nx*6.0+1.3)*amp*0.6+Math.sin(nx*2.1)*amp*0.8;
+      const width=14+34*taper;
+      const x=nx*Wc, y=cy+(Math.random()*2-1)*width*0.9;
+      const rad=0.6+Math.random()*1.8;
+      const col=Math.random()<0.5?c1.join(','):c2.join(',');
+      const gg=c.createRadialGradient(x,y,0,x,y,rad*3);
+      gg.addColorStop(0,'rgba('+col+',0.95)');
       gg.addColorStop(1,'rgba('+col+',0)');
-      c.fillStyle=gg; c.beginPath(); c.arc(x,y,rad*3.4,0,7); c.fill();
+      c.fillStyle=gg; c.beginPath(); c.arc(x,y,rad*3,0,7); c.fill();
     }
     return cv;
   }
@@ -1613,17 +1636,18 @@ const Universe = (() => {
       });
 
     /* Cúmulos de galaxias lejanas, tono cálido, como fondo de postal */
-    clusters=[];
+        clusters=[];
     const clusterHues=[['255,90,70','255,170,90'],['255,60,110','255,150,140'],
                         ['255,140,60','255,210,140'],['200,60,150','255,120,170']];
-    const CLU=Math.min(W,H)<520?4:7;
+    const CLU=Math.min(W,H)<520?3:5;
     for(let i=0;i<CLU;i++){
       const th=Math.random()*6.2832, ph=Math.acos(2*Math.random()-1);
       const r=22000+Math.random()*14000;
       clusters.push({
         x:Math.sin(ph)*Math.cos(th)*r, y:Math.cos(ph)*r*0.6, z:Math.sin(ph)*Math.sin(th)*r,
         spr:makeClusterSprite(clusterHues[i%clusterHues.length]),
-        s:3200+Math.random()*2600, al:0.34+Math.random()*0.22
+        s:4200+Math.random()*3400, al:0.4+Math.random()*0.22,
+        rot:(Math.random()*0.9-0.45)+Math.PI*0.22
       });
     }
 
@@ -1751,12 +1775,16 @@ const Universe = (() => {
       uCtx.globalAlpha=n.al;
       uCtx.drawImage(n.spr,P.x-s/2,P.y-s/2,s,s);
     }
-    for(const cl of clusters){
+       for(const cl of clusters){
       project(cl.x,cl.y,cl.z,P); if(!P.ok) continue;
-      const s=cl.s*P.k*2;
-      if(P.x<-s/2||P.x>W+s/2||P.y<-s/2||P.y>H+s/2) continue;
+      const dw=cl.s*P.k*2, dh=dw*0.34;
+      if(P.x<-dw/2||P.x>W+dw/2||P.y<-dh/2||P.y>H+dh/2) continue;
+      uCtx.save();
+      uCtx.translate(P.x,P.y);
+      uCtx.rotate(cl.rot);
       uCtx.globalAlpha=cl.al;
-      uCtx.drawImage(cl.spr,P.x-s/2,P.y-s/2,s,s);
+      uCtx.drawImage(cl.spr,-dw/2,-dh/2,dw,dh);
+      uCtx.restore();
     }
     for(const s of bgStars){
       project(s.x,s.y,s.z,P); if(!P.ok) continue;
@@ -2616,25 +2644,48 @@ const Warp=(()=>{
     c.fillStyle=g;c.fillRect(0,0,256,256);
     return s;
   }
-    function makeClusterSpriteW(colors){
-    const S=320, cv=document.createElement('canvas'); cv.width=cv.height=S;
-    const c=cv.getContext('2d'), cx=S/2, cy=S/2;
+     function makeClusterSpriteW(colors){
+    const Wc=560, Hc=190;
+    const cv=document.createElement('canvas'); cv.width=Wc; cv.height=Hc;
+    const c=cv.getContext('2d');
+    const img=c.createImageData(Wc,Hc); const d=img.data;
+    const c1=colors[0].split(',').map(Number), c2=colors[1].split(',').map(Number);
+    const midY=Hc*0.52, amp=Hc*0.10;
+    for(let y=0;y<Hc;y++){
+      for(let x=0;x<Wc;x++){
+        const nx=x/Wc;
+        const taper=Math.sin(Math.PI*nx);
+        if(taper<=0.002) continue;
+        const cy=midY+Math.sin(nx*6.0+1.3)*amp*0.6+Math.sin(nx*2.1)*amp*0.8;
+        const width=14+34*taper;
+        const dy=(y-cy)/width;
+        let dens=Math.exp(-dy*dy*1.4)*taper;
+        const dust=Math.max(0,Math.sin(nx*23.0+dy*2.0)*0.5+0.5);
+        dens*=1-0.6*Math.pow(dust,3)*taper;
+        const speck=Math.random()<0.018*taper?0.7:0;
+        const a=Math.min(1,dens*0.85+speck);
+        if(a<=0.004) continue;
+        const mixT=0.5+0.5*Math.sin(nx*4.5+dy);
+        const r=c1[0]+(c2[0]-c1[0])*mixT, g=c1[1]+(c2[1]-c1[1])*mixT, b=c1[2]+(c2[2]-c1[2])*mixT;
+        const i=(y*Wc+x)*4;
+        d[i]=r; d[i+1]=g; d[i+2]=b; d[i+3]=Math.min(255,a*255)|0;
+      }
+    }
+    c.putImageData(img,0,0);
     c.globalCompositeOperation='screen';
-    let g=c.createRadialGradient(cx,cy,0,cx,cy,S/2);
-    g.addColorStop(0,'rgba('+colors[0]+',0.35)');
-    g.addColorStop(0.5,'rgba('+colors[1]+',0.14)');
-    g.addColorStop(1,'rgba('+colors[1]+',0)');
-    c.fillStyle=g; c.beginPath(); c.arc(cx,cy,S/2,0,7); c.fill();
-    const n=40+((Math.random()*30)|0);
-    for(let i=0;i<n;i++){
-      const a=Math.random()*6.2832, rr=Math.pow(Math.random(),0.6)*S*0.42;
-      const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*0.72;
-      const rad=1.2+Math.random()*3.2;
-      const col=Math.random()<0.5?colors[0]:colors[1];
-      const gg=c.createRadialGradient(x,y,0,x,y,rad*3.4);
-      gg.addColorStop(0,'rgba('+col+',0.9)');
+    for(let i=0;i<90;i++){
+      const nx=Math.random();
+      const taper=Math.sin(Math.PI*nx);
+      if(Math.random()>taper) continue;
+      const cy=midY+Math.sin(nx*6.0+1.3)*amp*0.6+Math.sin(nx*2.1)*amp*0.8;
+      const width=14+34*taper;
+      const x=nx*Wc, y=cy+(Math.random()*2-1)*width*0.9;
+      const rad=0.6+Math.random()*1.8;
+      const col=Math.random()<0.5?c1.join(','):c2.join(',');
+      const gg=c.createRadialGradient(x,y,0,x,y,rad*3);
+      gg.addColorStop(0,'rgba('+col+',0.95)');
       gg.addColorStop(1,'rgba('+col+',0)');
-      c.fillStyle=gg; c.beginPath(); c.arc(x,y,rad*3.4,0,7); c.fill();
+      c.fillStyle=gg; c.beginPath(); c.arc(x,y,rad*3,0,7); c.fill();
     }
     return cv;
   }
@@ -2801,15 +2852,16 @@ let fireworks=[],nextFirework=0;
     }
 
     /* Cúmulos de galaxias lejanas, cálidos, como telón de fondo del viaje */
-    clusters=[];
+      clusters=[];
     const clusterHuesW=[['255,90,70','255,170,90'],['255,60,110','255,150,140'],['255,140,60','255,210,140']];
-    const NCLU=mob?3:5;
+    const NCLU=mob?2:4;
     for(let i=0;i<NCLU;i++){
       const [x,y]=randXY();
       clusters.push({x,y,z:-34000-Math.random()*40000,
         spr:makeClusterSpriteW(clusterHuesW[i%clusterHuesW.length]),
-        sz:5000+Math.random()*3200,
-        al:0.22+Math.random()*0.16});
+        sz:6200+Math.random()*4000,
+        al:0.3+Math.random()*0.18,
+        rot:(Math.random()*0.9-0.45)+Math.PI*0.22});
     }
 
     /* Planetas: 3 de recuerdo + 3 con letrero (idénticos a los tuyos) */
@@ -3057,18 +3109,22 @@ let fireworks=[],nextFirework=0;
     }
 
     /* cúmulos de galaxias lejanas: nunca se acercan, solo dan ambiente */
-    for(const clu of clusters){
+       for(const clu of clusters){
       const d=camZ-clu.z;
       if(d<20000){
         clu.z=camZ-40000-Math.random()*40000;
         const [x,y]=randXY(); clu.x=x; clu.y=y;
         continue;
       }
-      const k=F()/d, s=clu.sz*k;
+      const k=F()/d, dw=clu.sz*k, dh=dw*0.34;
       const x=cx0+clu.x*k, y=cy0+clu.y*k;
-      if(x<-s/2||x>W+s/2||y<-s/2||y>H+s/2) continue;
+      if(x<-dw/2||x>W+dw/2||y<-dh/2||y>H+dh/2) continue;
+      wCtx.save();
+      wCtx.translate(x,y);
+      wCtx.rotate(clu.rot);
       wCtx.globalAlpha=clu.al*Math.min(1,(90000-d)/12000);
-      wCtx.drawImage(clu.spr,x-s/2,y-s/2,s,s);
+      wCtx.drawImage(clu.spr,-dw/2,-dh/2,dw,dh);
+      wCtx.restore();
     }
 
     /* la aurora del final */
