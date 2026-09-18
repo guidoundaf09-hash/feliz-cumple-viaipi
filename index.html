@@ -3055,7 +3055,7 @@ function startMemories(){
   },430);
 }
 
-let paused = false, memTO = null, memShotTO = null;
+let memTO = null;
 
 function ensureMemUI(){
   if (document.getElementById('mem-popup-v2')) return;
@@ -3137,31 +3137,42 @@ function shootBurst(fromEl){
     setTimeout(() => s.remove(), 900);
   }
 }
-
 function openMem(i){
   const M=MEMORIES[i];
   if(!M)return;
-  Warp.pause();                                  /* el viaje se detiene aquí */
+  Warp.pause();
   const pop=document.getElementById('mem-popup');
   const img=document.getElementById('memImg');
+  const fb=document.getElementById('memFallback');
   document.getElementById('memTitle').textContent=M.title;
-  img.style.display='';img.src=M.img;
+  img.style.display='';
+  if(fb) fb.style.display='none';
+  img.onerror=()=>{ img.style.display='none'; if(fb) fb.style.display='block'; };
+  img.src=M.img;
   pop.style.display='flex';
   requestAnimationFrame(()=>requestAnimationFrame(()=>pop.classList.add('open')));
-  const bar=document.getElementById('memBar');
-  bar.style.transition='none';bar.style.width='100%';
-  void bar.offsetWidth;
-  bar.style.transition='width 8s linear';bar.style.width='0%';
+
+  /* El cierre automático se agenda YA, antes de tocar la barra,
+     así nunca se queda pendiente por un fallo en otra parte. */
   clearTimeout(memTO);
   memTO=setTimeout(closeMem,8300);
+
+  const bar=document.getElementById('memBar');
+  if(bar){
+    bar.style.transition='none';bar.style.width='100%';
+    void bar.offsetWidth;
+    bar.style.transition='width 8s linear';bar.style.width='0%';
+  }
 }
 function closeMem(){
   clearTimeout(memTO);
   const pop=document.getElementById('mem-popup');
+  if(!pop || !pop.classList.contains('open')) return; // ya estaba cerrado
   pop.classList.remove('open');
-  setTimeout(()=>{pop.style.display='none';Warp.resume();},520);  /* aquí arranca de nuevo */
+  setTimeout(()=>{pop.style.display='none';Warp.resume();},520);
 }
-
+/* Cierre manual tocando la tarjeta, como dice el hint "toca para continuar" */
+document.getElementById('mem-popup').addEventListener('click', closeMem);
 
   
 /* ==================== CONTROLES DE NAVEGACIÓN ==================== */
