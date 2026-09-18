@@ -287,7 +287,7 @@ const fCanvas = document.getElementById('fallCanvas');
 const fCtx = fCanvas.getContext('2d');
 
 let W = window.innerWidth, H = window.innerHeight;
-const DPR = Math.min(window.devicePixelRatio || 1, 2);
+const DPR = Math.min(window.devicePixelRatio || 1, Math.min(screen.width,screen.height) < 520 ? 1.5 : 2);ye  pero no me estas d
 
 function sizeCanvas(cv, ctx){
   cv.width = W * DPR; cv.height = H * DPR;
@@ -2517,15 +2517,36 @@ const DT=0.02,TMAX=94;let zT=[];
     c.fillStyle=g;c.fillRect(0,0,256,256);
     return s;
   }
-  const SPR={white:makeGlow('255,250,255'),pink:makeGlow('255,190,215'),
-             gold:makeGlow('255,230,180'),blue:makeGlow('170,200,255')};
-  const heartGlow=makeGlow('255,70,120');
-  const dotW=makeGlow('255,240,248'),dotP=makeGlow('255,170,205');
+  /* Estrella con caída gaussiana: llega a alpha 0 EXACTO en el borde → jamás se ve el cuadro */
+  function makeStar(rgb){
+    const S=128,cv=document.createElement('canvas');cv.width=cv.height=S;
+    const c=cv.getContext('2d'),img=c.createImageData(S,S),d=img.data;
+    const m=/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(rgb);
+    const r0=+m[1],g0=+m[2],b0=+m[3],R=S/2;
+    for(let y=0;y<S;y++)for(let x=0;x<S;x++){
+      const dx=(x-R+.5)/R, dy=(y-R+.5)/R, q=Math.sqrt(dx*dx+dy*dy);
+      let a=0;
+      if(q<1){
+        a=Math.exp(-q*q*9)*0.95 + Math.pow(1-q,3)*0.35;
+        a*=Math.min(1,(1-q)*6);
+      }
+      const i=(y*S+x)*4;
+      d[i]=r0;d[i+1]=g0;d[i+2]=b0;d[i+3]=Math.max(0,Math.min(255,a*255))|0;
+    }
+    c.putImageData(img,0,0);
+    return cv;
+  }
+  const SPR={white:makeStar('255,250,255'),pink:makeStar('255,190,215'),
+             gold:makeStar('255,230,180'),blue:makeStar('170,200,255')};
+  const heartGlow=makeStar('255,70,120');
+  const dotW=makeStar('255,240,248'),dotP=makeStar('255,170,205');
 
   let running=false,raf=null,t0=0,lastT=0;
   let tTravel=0,finaleDone=false,heartOn=false,titleShown=false;
   let camZ=0,heartT0=0;
   let bgStars=[],galas=[],systems=[],nebulas=[],planets=[],shoots=[],nextShoot=1.2;
+    const items=[]; let itN=0;
+  function push(d,o,t){const e=items[itN]||(items[itN]={});e.d=d;e.o=o;e.t=t;itN++;}
   let heartP=[];
   let finaleP = [], finaleFlash = false, finaleTextT = null;
    let curV=0;
@@ -2582,11 +2603,12 @@ function buildAll(){
   /* Galaxias sueltas + clústeres (grupos muy juntas) */
   galas=[];
   const hues=[210,265,300,330,20,45,180,140,255];
+    const GALSPR=hues.map(h=>makeGalaxySprite(h));   // 9 sprites en vez de ~100
   const NG=mob?44:70;
   for(let i=0;i<NG;i++){
     const [x,y]=randXY();
     galas.push({x,y,z:-3000-Math.random()*70000,
-      spr:makeGalaxySprite(hues[(Math.random()*hues.length)|0]),
+           spr:GALSPR[(Math.random()*GALSPR.length)|0],
       sz:280+Math.random()*800,rot:Math.random()*6.28,
       rotV:(0.05+Math.random()*0.12)*(Math.random()<.5?-1:1)});
   }
@@ -2598,7 +2620,7 @@ function buildAll(){
     for(let i=0;i<n;i++){
       galas.push({x:cx+(Math.random()-.5)*900,y:cy+(Math.random()-.5)*700,
         z:cz+(Math.random()-.5)*2600,
-        spr:makeGalaxySprite(hues[(Math.random()*hues.length)|0]),
+              spr:GALSPR[(Math.random()*GALSPR.length)|0],
         sz:160+Math.random()*420,rot:Math.random()*6.28,
         rotV:(0.04+Math.random()*0.1)*(Math.random()<.5?-1:1)});
     }
@@ -2795,7 +2817,9 @@ function drawHeart(dt, th){
     curV=v;
 
     wCtx.globalCompositeOperation='source-over';
-    wCtx.fillStyle='#030209';wCtx.fillRect(0,0,W,H);
+        wCtx.globalAlpha=1;
+    wCtx.fillStyle='rgba(3,2,9,0.34)';   // no borra del todo: las estelas se funden entre fotogramas
+    wCtx.fillRect(0,0,W,H);
     wCtx.globalCompositeOperation='screen';
 
     const cx0=W/2+Math.sin(th*0.31)*(10+22*Math.min(1,v/900));
@@ -2804,7 +2828,7 @@ function drawHeart(dt, th){
     for(const n of nebulas){
       const d=camZ-n.z;
       if(d<80){n.z=camZ-66000-Math.random()*6000;const [x,y]=randXY();n.x=x;n.y=y;continue;}
-      const k=F()/d,s=n.sz*k;
+            const k=F()/d, s=Math.min(n.sz*k, Math.max(W,H)*2.4);
       const x=cx0+n.x*k,y=cy0+n.y*k;
       if(x<-s/2||x>W+s/2||y<-s/2||y>H+s/2)continue;
       wCtx.globalAlpha=n.al*Math.min(1,(66000-d)/8000)*Math.min(1,(d-80)/600);
@@ -2839,16 +2863,16 @@ if(nextShoot<=0&&tTravel<80){
     for(const g of galas){
       const d=camZ-g.z;
       if(d<60){g.z=camZ-62000-Math.random()*6000;const [x,y]=randXY();g.x=x;g.y=y;continue;}
-      if(d<56000)items.push({d,o:g,t:0});
+      if(d<56000)
     }
     for(const s of systems){
       const d=camZ-s.z;
       if(d<60){s.z=camZ-60000-Math.random()*6000;const [x,y]=randXY();s.x=x;s.y=y;continue;}
-      if(d<56000)items.push({d,o:s,t:1});
+      if(d<56000)
     }
     for(const p of planets){
       const d=camZ-p.z;
-      if(d>40)items.push({d,o:p,t:2});
+      if(d>40)
     }
     items.sort((a,b)=>b.d-a.d);
     for(const it of items){
@@ -2898,35 +2922,34 @@ if(nextShoot<=0&&tTravel<80){
 }
     }
 
-    const stretch=Math.max(30,v*0.105);
+       const stretch=Math.max(30,v*0.105);
+    wCtx.lineCap='round';
+    const MAXS=Math.min(W,H)*0.13;          // ninguna estrella crece más que esto
     for(const s of bgStars){
       const d=camZ-s.z;
-      if(d<26){
-        if(s.near){ // las warp se reciclan cerca: stream constante de estrellas pasando
-          const a=Math.random()*6.2832;
-          const r=90+Math.pow(Math.random(),1.6)*520;
-          s.x=Math.cos(a)*r;s.y=Math.sin(a)*r*0.8;
-          s.z=camZ-12000-Math.random()*10000;
+      const near0=s.near?260:200;
+      if(d<near0){
+        if(s.near){
+          const a=Math.random()*6.2832, r=90+Math.pow(Math.random(),1.6)*520;
+          s.x=Math.cos(a)*r; s.y=Math.sin(a)*r*0.8; s.z=camZ-12000-Math.random()*10000;
         }else{
-          s.z=camZ-58000-Math.random()*7000;const [x,y]=randXY();s.x=x;s.y=y;
+          s.z=camZ-58000-Math.random()*7000; const [x,y]=randXY(); s.x=x; s.y=y;
         }
         continue;
       }
       const k1=F()/d,k2=F()/(d+stretch);
       const x1=cx0+s.x*k1,y1=cy0+s.y*k1;
-      if(x1<-60||x1>W+60||y1<-60||y1>H+60)continue;
+      if(x1<-90||x1>W+90||y1<-90||y1>H+90)continue;
       const x2=cx0+s.x*k2,y2=cy0+s.y*k2;
       const twk=0.45+0.55*Math.abs(Math.sin(s.tw+th*s.twS));
-      const al=twk*Math.min(1,(58000-d)/6000)*Math.min(1,(d-26)/160);
-      if(al<=0.015)continue;
-      if(v>120){
-        const g=wCtx.createLinearGradient(x1,y1,x2,y2);
-        g.addColorStop(0,'rgba(255,255,255,'+(0.8*al)+')');
-        g.addColorStop(1,'rgba(255,255,255,0)');
-        wCtx.strokeStyle=g;wCtx.lineWidth=Math.max(0.8,s.s*k1*2.2);
+      const al=twk*Math.min(1,(58000-d)/6000)*Math.min(1,(d-near0)/900);
+      if(al<=0.02)continue;
+      if(v>120){                             // estela con color plano: 0 allocs por frame
+        wCtx.strokeStyle='rgba(236,242,255,'+(0.42*al).toFixed(3)+')';
+        wCtx.lineWidth=Math.min(MAXS*0.22,Math.max(0.8,s.s*k1*1.7));
         wCtx.beginPath();wCtx.moveTo(x1,y1);wCtx.lineTo(x2,y2);wCtx.stroke();
       }
-      const sz=s.s*k1*7+1.2;
+      const sz=Math.min(MAXS,s.s*k1*7+1.2);
       wCtx.globalAlpha=al;
       wCtx.drawImage(s.spr,x1-sz/2,y1-sz/2,sz,sz);
     }
@@ -2935,7 +2958,7 @@ if(nextShoot<=0&&tTravel<80){
 
     const vg=wCtx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.42,W/2,H/2,Math.max(W,H)*0.75);
     vg.addColorStop(0,'rgba(0,0,0,0)');
-    vg.addColorStop(1,'rgba(2,1,6,0.5)');
+    vg.addColorStop(1,'rgba(2,1,6,0.12)');
     wCtx.fillStyle=vg;wCtx.fillRect(0,0,W,H);
   }
 
@@ -2947,6 +2970,23 @@ if(nextShoot<=0&&tTravel<80){
     wCanvas.style.display='block';
     requestAnimationFrame(()=>requestAnimationFrame(()=>{wCanvas.style.opacity='1';}));
     raf=requestAnimationFrame(frame);
+        itN=0;
+    for(const g of galas){
+      const d=camZ-g.z;
+      if(d<60){g.z=camZ-62000-Math.random()*6000;const [x,y]=randXY();g.x=x;g.y=y;continue;}
+      if(d<56000)push(d,g,0);
+    }
+    for(const s of systems){
+      const d=camZ-s.z;
+      if(d<60){s.z=camZ-60000-Math.random()*6000;const [x,y]=randXY();s.x=x;s.y=y;continue;}
+      if(d<56000)push(d,s,1);
+    }
+    for(const p of planets){
+      const d=camZ-p.z;
+      if(d>40)push(d,p,2);
+    }
+    items.length=itN;
+    items.sort((a,b)=>b.d-a.d);
   }
   return {start};
 })();
