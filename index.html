@@ -1761,118 +1761,150 @@ const Universe = (() => {
    como fugaces (2.8s) · cielo limpio (12s) · y vuelve a escribirse.
    ≈ 33 segundos por ciclo completo.
    ================================================================== */
+/* ==================================================================
+   TÍTULO DEL UNIVERSO — letras de polvo estelar.
+   Miles de puntitos pequeños y nítidos forman EXACTAMENTE el
+   mismo diseño del título original (mismos colores por línea).
+   Ciclo: se escribe (3s) · brilla formado (16s) · se esparce
+   como fugaces (2.8s) · cielo limpio (12s) · y vuelve a empezar.
+   ================================================================== */
 const TitleFX = (() => {
-  const TIMING = { inDur:3.0, hold:16, outDur:2.8, gone:12 }; // ← edita los tiempos aquí
+  const TIMING = { inDur:3.0, hold:16, outDur:2.8, gone:12 }; // ← tiempos editables
   let parts=[], state='off', tState=0, lastW=0, lastH=0, cyT=0;
-  const sprW = makeGlow('255,250,255');
-  const sprR = makeGlow('255,205,222');
-  const sprG = makeGlow('255,232,190');
+
+  /* Puntito nítido: núcleo sólido con halo corto (NO mancha difusa) */
+  function makeDot(rgb){
+    const s=document.createElement('canvas'); s.width=s.height=32;
+    const c=s.getContext('2d');
+    const g=c.createRadialGradient(16,16,0,16,16,16);
+    g.addColorStop(0,`rgba(${rgb},1)`);
+    g.addColorStop(.45,`rgba(${rgb},.85)`);
+    g.addColorStop(1,`rgba(${rgb},0)`);
+    c.fillStyle=g; c.fillRect(0,0,32,32);
+    return s;
+  }
+  const D = {
+    over: makeDot('255,179,198'),  // rosa — "FELICES 21 AÑOS"
+    name: makeDot('255,255,255'),  // blanco — "Zharick Abigail"
+    last: makeDot('255,217,230'),  // rosa claro — "Pérez Velasco"
+    sub:  makeDot('205,199,220')   // lavanda — subtítulo
+  };
 
   function buildSpec(){
-    const aw = W*0.86, RF = 100;
-    const mc = document.createElement('canvas').getContext('2d');
-    const L = [
-      { txt:'FELICES 21 AÑOS', f:fz=>`500 ${fz}px Jost,'Segoe UI',Arial,sans-serif`, tr:.46, k:.30, gap:.30, up:true },
-      { txt:'Zharick Abigail', f:fz=>`600 ${fz}px 'Cormorant Garamond',Georgia,serif`, tr:.02, k:1, gap:.07, up:false },
-      { txt:'Pérez Velasco', f:fz=>`italic 600 ${fz}px 'Cormorant Garamond',Georgia,serif`, tr:.05, k:.58, gap:.40, up:false },
-      { txt:'— un universo entero, girando solo para ti —', f:fz=>`italic 600 ${fz}px 'Cormorant Garamond',Georgia,serif`, tr:.02, k:.40, gap:0, up:false }
+    const aw=W*0.88, RF=100;
+    const mc=document.createElement('canvas').getContext('2d');
+    /* Mismo diseño tipográfico del título HTML original */
+    const L=[
+      { txt:'FELICES 21 AÑOS', up:true,  tr:.55, k:.26, gap:.26, dot:D.over, f:fz=>`500 ${fz}px Jost,'Segoe UI',Arial,sans-serif` },
+      { txt:'Zharick Abigail', up:false, tr:.015,k:1,   gap:.06, dot:D.name, f:fz=>`600 ${fz}px 'Cormorant Garamond',Georgia,serif` },
+      { txt:'Pérez Velasco',   up:false, tr:.08, k:.60, gap:.24, dot:D.last, f:fz=>`italic 500 ${fz}px 'Cormorant Garamond',Georgia,serif` },
+      { txt:'— un universo entero, girando solo para ti —', up:false, tr:.02, k:.34, gap:0, dot:D.sub, f:fz=>`italic 500 ${fz}px 'Cormorant Garamond',Georgia,serif` }
     ];
-    const widthOf = ln => {
-      mc.font = ln.f(RF);
-      let w=0; const s = ln.up ? ln.txt.toUpperCase() : ln.txt;
-      for(const ch of s) w += mc.measureText(ch).width + RF*ln.tr;
-      return Math.max(1, w - RF*ln.tr);
+    const widthOf=(ln,fs)=>{
+      mc.font=ln.f(fs);
+      let w=0; const s=ln.up?ln.txt.toUpperCase():ln.txt;
+      for(const ch of s) w+=mc.measureText(ch).width+fs*ln.tr;
+      return Math.max(1,w-fs*ln.tr);
     };
-    const fsBase = Math.min(76, aw*RF/widthOf(L[1]));
-    const specs = L.map(ln=>{
-      let fs = fsBase*ln.k;
-      const w = widthOf(ln)*fs/RF;
-      if(w>aw) fs *= aw/w;
-      return { ln, fs, w: widthOf(ln)*fs/RF };
-    });
+    const fsBase=Math.min(78, aw*RF/widthOf(L[1],RF));
     let totalH=0;
-    specs.forEach((s,i)=>{ totalH += s.fs + (i<3 ? s.ln.gap*fsBase : 0); });
-
-    const top = 40;
-    const cw = Math.ceil(W), chh = Math.ceil(top + totalH + 30);
-    const cv = document.createElement('canvas'); cv.width=cw; cv.height=chh;
-    const c = cv.getContext('2d');
-    c.fillStyle='#fff'; c.textBaseline='middle';
-    let y = top;
-    specs.forEach(s=>{
-      c.font = s.ln.f(s.fs);
-      const str = s.ln.up ? s.ln.txt.toUpperCase() : s.ln.txt;
-      let x = (cw - s.w)/2;
-      const my = y + s.fs*0.52;
-      for(const chx of str){
-        c.fillText(chx, x, my);
-        x += c.measureText(chx).width + s.fs*s.ln.tr;
-      }
-      y += s.fs + s.ln.gap*fsBase;
+    L.forEach((ln,i)=>{
+      let fs=fsBase*ln.k;
+      const w=widthOf(ln,fs);
+      if(w>aw) fs*=aw/w;
+      ln.fs=fs;
+      totalH+=fs+(i<L.length-1?ln.gap*fsBase:0);
     });
 
-    const data = c.getImageData(0,0,cw,chh).data;
-    const target = Math.min(W,H)<520 ? 680 : 950;
-    const collect = st => {
+    const top=44;
+    const cw=Math.ceil(W), chh=Math.ceil(top+totalH+34);
+    const cv=document.createElement('canvas'); cv.width=cw; cv.height=chh;
+    const c=cv.getContext('2d');
+    c.fillStyle='#fff'; c.textBaseline='middle';
+    let y=top;
+    L.forEach((ln,i)=>{
+      c.font=ln.f(ln.fs);
+      const str=ln.up?ln.txt.toUpperCase():ln.txt;
+      let x=(cw-widthOf(ln,ln.fs))/2;
+      const my=y+ln.fs*0.53;
+      for(const ch of str){
+        c.fillText(ch,x,my);
+        x+=c.measureText(ch).width+ln.fs*ln.tr;
+      }
+      y+=ln.fs+(i<L.length-1?ln.gap*fsBase:0);
+    });
+
+    const data=c.getImageData(0,0,cw,chh).data;
+    const mob=Math.min(W,H)<520;
+    const target=mob?1500:2600;               // ← densidad (más = más nítido)
+    const collect=st=>{
       const arr=[];
-      for(let yy=0; yy<chh; yy+=st)
-        for(let xx=0; xx<cw; xx+=st)
-          if(data[(yy*cw+xx)*4+3] > 130) arr.push([xx,yy]);
+      for(let yy=0;yy<chh;yy+=st)
+        for(let xx=0;xx<cw;xx+=st)
+          if(data[(yy*cw+xx)*4+3]>120) arr.push([xx,yy]);
       return arr;
     };
     let st=2, pts=collect(st);
-    if(pts.length>target){ st=Math.max(2, Math.round(st*Math.sqrt(pts.length/target))); pts=collect(st); }
+    if(pts.length>target){ st=Math.min(3,Math.max(2,Math.round(st*Math.sqrt(pts.length/target)))); pts=collect(st); }
     while(pts.length>target) pts.splice((Math.random()*pts.length)|0,1);
-    cyT = top + totalH/2;
-    return pts;
+
+    cyT=top+totalH/2;
+    /* cada punto recuerda el color de su línea */
+    const lineOf=[];
+    let acc=0;
+    L.forEach((ln,i)=>{ const h=ln.fs; lineOf.push([acc,acc+h]); acc+=h+ln.gap*fsBase; });
+    return pts.map(q=>{
+      let dot=D.name;
+      for(let i=0;i<lineOf.length;i++)
+        if(q[1]>=lineOf[i][0] && q[1]<lineOf[i][1]){ dot=L[i].dot; break; }
+      return [q[0],q[1],dot];
+    });
   }
 
   function respawn(){
-    const pts = buildSpec();
-    parts = pts.map(q=>{
-      const ang = Math.random()*6.2832;
-      const rad = Math.hypot(W,H)*0.5 + 60 + Math.random()*300;
-      const x = W/2 + Math.cos(ang)*rad;
-      const y = cyT + Math.sin(ang)*rad;
-      const dx = q[0]-x, dy = q[1]-y, d = Math.hypot(dx,dy)||1;
-      const sp = 620 + Math.random()*480;
-      const r = Math.random();
+    const pts=buildSpec();
+    parts=pts.map(q=>{
+      const ang=Math.random()*6.2832;
+      const rad=Math.hypot(W,H)*0.5+60+Math.random()*300;
+      const x=W/2+Math.cos(ang)*rad;
+      const y=cyT+Math.sin(ang)*rad;
+      const dx=q[0]-x, dy=q[1]-y, d=Math.hypot(dx,dy)||1;
+      const sp=620+Math.random()*480;
       return {
-        hx:q[0], hy:q[1], x, y,
-        vx: dx/d*sp + (Math.random()-.5)*260,
-        vy: dy/d*sp + (Math.random()-.5)*260,
-        delay: Math.random()*0.9,
-        sz: 2.4 + Math.random()*2.4,
-        spr: r<.70 ? sprW : r<.92 ? sprR : sprG,
-        tw: Math.random()*6.2832, twS: 1.4+Math.random()*2.4,
-        fl: Math.random()*6.2832, flS: .5+Math.random()*.9
+        hx:q[0], hy:q[1], dot:q[2], x, y,
+        vx:dx/d*sp+(Math.random()-.5)*260,
+        vy:dy/d*sp+(Math.random()-.5)*260,
+        delay:0.1+(q[0]/W)*1.5+Math.random()*0.35,  // se escribe de izq. a der.
+        sz:0.9+Math.random()*0.8,                    // ← partícula PEQUEÑA
+        tw:Math.random()*6.2832, twS:1.4+Math.random()*2.4,
+        fl:Math.random()*6.2832, flS:.5+Math.random()*.9
       };
     });
   }
 
   function disperse(){
-    const cxT = W/2;
+    const cx0=W/2;
     for(const p of parts){
-      const dx=p.hx-cxT, dy=p.hy-cyT, d=Math.hypot(dx,dy)||1;
+      const dx=p.hx-cx0, dy=p.hy-cyT, d=Math.hypot(dx,dy)||1;
       const sp=430+Math.random()*540;
-      p.vx = dx/d*sp + (Math.random()-.5)*240;
-      p.vy = dy/d*sp + (Math.random()-.5)*240 - 70;
+      p.vx=dx/d*sp+(Math.random()-.5)*240;
+      p.vy=dy/d*sp+(Math.random()-.5)*240-70;
     }
   }
 
   function frame(dt,t,ctx){
     if(state==='off') return;
-    if(W!==lastW || H!==lastH){ lastW=W; lastH=H; respawn(); state='in'; tState=0; }
-    tState += dt;
+    if(W!==lastW||H!==lastH){ lastW=W; lastH=H; respawn(); state='in'; tState=0; }
+    tState+=dt;
 
-    if(state==='in' && tState > TIMING.inDur + 1.0){
+    if(state==='in'&&tState>TIMING.inDur+0.6){
       state='hold'; tState=0;
       for(const p of parts){ p.x=p.hx; p.y=p.hy; p.vx=p.vy=0; }
-    } else if(state==='hold' && tState > TIMING.hold){
+    } else if(state==='hold'&&tState>TIMING.hold){
       disperse(); state='out'; tState=0;
-    } else if(state==='out' && tState > TIMING.outDur){
+    } else if(state==='out'&&tState>TIMING.outDur){
       state='gone'; tState=0;
-    } else if(state==='gone' && tState > TIMING.gone){
+    } else if(state==='gone'&&tState>TIMING.gone){
       respawn(); state='in'; tState=0;
     }
 
@@ -1880,38 +1912,34 @@ const TitleFX = (() => {
     ctx.globalCompositeOperation='screen';
     ctx.lineCap='round';
     for(const p of parts){
-      let al=1, s=3.4 + p.sz*2.1;
+      let al=1, s=1.7+p.sz;                     // ← tamaño final ~2.6–3.4px
       if(state==='in'){
-        if(tState > p.delay){
-          p.vx += (p.hx-p.x)*9*dt; p.vy += (p.hy-p.y)*9*dt;
+        if(tState>p.delay){
+          p.vx+=(p.hx-p.x)*9*dt; p.vy+=(p.hy-p.y)*9*dt;
           const dmp=Math.exp(-3.6*dt); p.vx*=dmp; p.vy*=dmp;
         }
-        p.x += p.vx*dt; p.y += p.vy*dt;
-        al = .35 + .65*Math.min(1, tState/TIMING.inDur);
+        p.x+=p.vx*dt; p.y+=p.vy*dt;
+        al=.35+.65*Math.min(1,tState/TIMING.inDur);
       } else if(state==='hold'){
-        p.x = p.hx + Math.sin(t*p.flS + p.fl)*1.4;
-        p.y = p.hy + Math.cos(t*p.flS*.8 + p.fl)*1.1;
-        s *= 1.12;
-        al = .8 + .2*Math.sin(p.tw + t*p.twS);
+        p.x=p.hx+Math.sin(t*p.flS+p.fl)*0.9;    // flota apenas ±1px (no emborrona)
+        p.y=p.hy+Math.cos(t*p.flS*.8+p.fl)*0.7;
+        al=.88+.12*Math.sin(p.tw+t*p.twS);      // titileo sutil, siempre legible
       } else if(state==='out'){
-        p.x += p.vx*dt; p.y += p.vy*dt;
+        p.x+=p.vx*dt; p.y+=p.vy*dt;
         const dmp=Math.exp(-.33*dt); p.vx*=dmp; p.vy*=dmp;
-        al = Math.max(0, 1 - tState/TIMING.outDur);
-      } else {
-        continue; // gone: cielo limpio
-      }
+        al=Math.max(0,1-tState/TIMING.outDur);
+      } else continue;
       if(al<=0.02) continue;
-      // estela de estrella fugaz mientras vuela
-      if(p.vx*p.vx + p.vy*p.vy > 32400){ // |v| > 180
+      if(p.vx*p.vx+p.vy*p.vy>32400){            // estela de fugaz mientras vuela
         const tx=p.x-p.vx*.075, ty=p.y-p.vy*.075;
         const g=ctx.createLinearGradient(p.x,p.y,tx,ty);
         g.addColorStop(0,`rgba(255,240,248,${.5*al})`);
         g.addColorStop(1,'rgba(255,240,248,0)');
-        ctx.strokeStyle=g; ctx.lineWidth=1.5;
+        ctx.strokeStyle=g; ctx.lineWidth=1.3;
         ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(tx,ty); ctx.stroke();
       }
       ctx.globalAlpha=Math.min(1,al);
-      ctx.drawImage(p.spr, p.x-s/2, p.y-s/2, s, s);
+      ctx.drawImage(p.dot,p.x-s/2,p.y-s/2,s,s);
     }
     ctx.globalAlpha=1;
     ctx.restore();
