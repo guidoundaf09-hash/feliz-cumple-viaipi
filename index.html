@@ -2418,7 +2418,7 @@ const MusicPiano=(()=>{
 })();
 
 /* ---------- POPUPS DE RECUERDOS ---------- */
-let memTO=null;
+let paused=false, memTO=null;
 function openMem(i){
   paused=true;
   const M=MEMORIES[i];if(!M){paused=false;return;}
@@ -2535,7 +2535,7 @@ const DT=0.02,TMAX=94;let zT=[];
   const dotW=makeGlow('255,240,248'),dotP=makeGlow('255,170,205');
 
   let running=false,raf=null,t0=0,lastT=0;
-  let tTravel=0,paused=false,finaleDone=false,heartOn=false,titleShown=false;
+  let tTravel=0,finaleDone=false,heartOn=false,titleShown=false;
   let camZ=0,heartT0=0;
   let bgStars=[],galas=[],systems=[],nebulas=[],planets=[],shoots=[],nextShoot=1.2;
   let heartP=[];
